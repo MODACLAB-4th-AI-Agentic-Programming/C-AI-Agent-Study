@@ -14,11 +14,11 @@
 
 ## 📁 파일 구조 및 명칭 예시
 
-### 📂 [materials/](https://github.com/MODACLAB-4th-AI-Agentic-Programming/C-AI-Agent-Study/tree/main/week1/materials)
+### 📂 [materials/](./materials)
 각 멤버별 발표 자료를 저장합니다.
 - **명칭 예시**: `[성함]_1주차_발표자료.pdf` (예: `신인호_1주차_활용사례.pdf`)
 - **텍스트/링크**: `[성함]_공유자료.md` 파일 내에 관련 링크 정리
 
-### 📂 [logs/](https://github.com/MODACLAB-4th-AI-Agentic-Programming/C-AI-Agent-Study/tree/main/week1/logs)
+### 📂 [logs/](./logs)
 스터디 논의 내용 및 회의록을 저장합니다.
 - **명칭 예시**: `YYMMDD_1주차_회의록.md` (예: `240414_1주차_스터디기록.md`)

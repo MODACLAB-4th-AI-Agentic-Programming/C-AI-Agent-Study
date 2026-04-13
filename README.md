@@ -64,4 +64,4 @@
 
 ## 🔗 관련 링크
 - [모닥랩 공식 홈페이지](https://modac-smilegate.replit.app/modac-lab)
-- [1주차 공유 리스트 & 자료 (업데이트 예정)]
+- [1주차 공유 리스트 & 자료](./week1)
