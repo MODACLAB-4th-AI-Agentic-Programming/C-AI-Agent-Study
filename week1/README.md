@@ -12,6 +12,13 @@
 - 현재 업무 또는 개발 워크플로우에 AI를 어떻게 녹여내고 있는지 소개
 - 각자가 주목하고 있는 AI 에이전트 기술 및 기법
 
-## 📁 파일 구조
-- `/materials`: 각 멤버별 발표 자료 (PDF, Link 등)
-- `/logs`: 스터디 논의 내용 정리본
+## 📁 파일 구조 및 명칭 예시
+
+### 📂 [materials/](file:///Users/inshin/goinfre/C-AI-Agent-Study/week1/materials)
+각 멤버별 발표 자료를 저장합니다.
+- **명칭 예시**: `[성함]_1주차_발표자료.pdf` (예: `신인호_1주차_활용사례.pdf`)
+- **텍스트/링크**: `[성함]_공유자료.md` 파일 내에 관련 링크 정리
+
+### 📂 [logs/](file:///Users/inshin/goinfre/C-AI-Agent-Study/week1/logs)
+스터디 논의 내용 및 회의록을 저장합니다.
+- **명칭 예시**: `YYMMDD_1주차_회의록.md` (예: `240414_1주차_스터디기록.md`)
