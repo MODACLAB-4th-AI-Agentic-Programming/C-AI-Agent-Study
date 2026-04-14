@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>하네스 엔지니어링 — 우리가 이미 하고 있는 것</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/github.css" />
+  <style>
+    :root {
+      --bg:      #ffffff;
+      --surface: #f5f7f5;
+      --border:  #dde5dd;
+      --accent:  #00b37d;
+      --blue:    #2b7de9;
+      --warn:    #d4850a;
+      --danger:  #d93025;
+      --purple:  #8b5cf6;
+      --muted:   rgba(0,0,0,0.42);
+      --text:    rgba(0,0,0,0.82);
+    }
+    .reveal-viewport { background: var(--bg); }
+    .reveal { background: var(--bg); font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; }
+
+    .reveal h1 { font-size: 2.6em; font-weight: 800; color: #1a1a1a; letter-spacing: -0.03em; margin-bottom: .3em; }
+    .reveal h2 {
+      font-size: 1.2em; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .12em;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: .35em; margin-bottom: .7em;
+    }
+    .reveal h3 { font-size: 1.1em; font-weight: 600; color: #1a1a1a; margin: 0 0 .4em; }
+    .reveal p  { font-size: .95em; line-height: 1.75; color: var(--text); margin: 0 0 .3em; }
+    .reveal li { font-size: .95em; line-height: 1.85; color: var(--text); }
+    .reveal ul { margin: 0 0 .4em 1.2em; }
+
+    .reveal .slides > section:not(:has(> section)),
+    .reveal .slides > section > section {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+      padding: 32px 50px !important;
+      box-sizing: border-box;
+      height: 100% !important;
+      top: 0 !important;
+    }
+    .reveal .slides > section:has(> section) { padding: 0 !important; }
+
+    .reveal code {
+      background: #eef3ee; border: 1px solid #d0dbd0; color: var(--accent);
+      padding: 1px 7px; border-radius: 4px; font-size: .82em;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    .reveal pre {
+      background: #f0f4f0 !important; border: 1px solid #d0dbd0; border-radius: 8px;
+      padding: 10px 14px !important; margin: .3em 0; box-shadow: none; width: 100%;
+    }
+    .reveal pre code { background: transparent !important; border: none; font-size: .78em; color: #1a2e1a; }
+
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: .58em; font-weight: 700; letter-spacing: .04em; vertical-align: middle; margin-left: 8px; }
+    .badge-done { background: rgba(0,179,125,.1); color: var(--accent); border: 1px solid rgba(0,179,125,.35); }
+    .badge-new  { background: rgba(43,125,233,.1); color: var(--blue); border: 1px solid rgba(43,125,233,.35); }
+    .badge-pend { background: rgba(212,133,10,.1); color: var(--warn); border: 1px solid rgba(212,133,10,.35); }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .7em .9em; overflow: visible; min-height: 0; }
+    .card h4 { font-size: .82em; font-weight: 700; color: var(--accent); margin: 0 0 .3em; text-transform: uppercase; letter-spacing: .06em; }
+    .card p, .card li { font-size: .85em; }
+    .card pre { margin: .2em 0; font-size: .85em; padding: 8px 12px !important; }
+    .card ul { margin: 0 0 .2em 1em; }
+
+    .cols   { display: grid; gap: 14px; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    .cols-5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+
+    .stat-box { text-align: center; padding: .9em .5em;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+    .stat-num   { display: block; font-size: 2.6em; font-weight: 800; color: var(--accent); line-height: 1.1; }
+    .stat-label { font-size: .65em; color: var(--muted); }
+
+    .timeline { border-left: 2px solid #d0dbd0; padding-left: 1.3em; margin-left: .2em; }
+    .timeline-item { position: relative; margin-bottom: .85em; }
+    .timeline-item::before { content: ''; position: absolute; left: -1.52em; top: .38em;
+      width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+    .timeline-item.blue::before  { background: var(--blue); }
+    .timeline-item.warn::before  { background: var(--warn); }
+    .timeline-item.muted::before { background: #bbb; }
+    .timeline-date  { display: block; font-size: .7em; color: var(--muted); }
+    .timeline-title { display: block; font-size: .95em; font-weight: 600; color: #1a1a1a; }
+    .timeline-desc  { display: block; font-size: .82em; color: var(--muted); line-height: 1.55; }
+
+    .hl { background: rgba(0,179,125,.07); border-left: 3px solid var(--accent);
+      padding: .5em .8em; border-radius: 0 6px 6px 0; margin-top: .6em; }
+    .hl p { font-size: .74em; margin: 0; color: var(--text); }
+    .hl-warn { background: rgba(212,133,10,.07); border-left: 3px solid var(--warn);
+      padding: .5em .8em; border-radius: 0 6px 6px 0; margin-top: .6em; }
+    .hl-warn p { font-size: .74em; margin: 0; color: var(--text); }
+    .hl-blue { background: rgba(43,125,233,.07); border-left: 3px solid var(--blue);
+      padding: .5em .8em; border-radius: 0 6px 6px 0; margin-top: .6em; }
+    .hl-blue p { font-size: .74em; margin: 0; color: var(--text); }
+
+    .reveal .progress { background: #e0e5e0; height: 3px; }
+    .reveal .progress span { background: var(--accent); }
+    .reveal .slide-number { background: transparent; color: #999; font-size: .5em; }
+
+    .cover-tag { display: inline-block; background: rgba(0,179,125,.08); border: 1px solid rgba(0,179,125,.3);
+      color: var(--accent); font-size: .62em; padding: 3px 12px; border-radius: 20px;
+      letter-spacing: .06em; margin-bottom: 1.2em; }
+    .cover-rule { width: 40px; height: 2px; background: var(--accent); margin: .8em auto 1em; }
+
+    .pattern-box { text-align: center; padding: .7em .4em;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+    .pattern-icon { font-size: 1.6em; display: block; margin-bottom: .2em; }
+    .pattern-name { font-size: .72em; font-weight: 700; color: #1a1a1a; display: block; }
+    .pattern-desc { font-size: .58em; color: var(--muted); display: block; margin-top: .15em; line-height: 1.4; }
+
+    .layer-table { width: 100%; border-collapse: collapse; font-size: .72em; }
+    .layer-table th { color: var(--accent); text-align: left; padding: .45em .6em;
+      border-bottom: 2px solid #c0d0c0; font-weight: 700; font-size: .85em; }
+    .layer-table td { padding: .4em .6em; border-bottom: 1px solid #e8ede8; color: var(--text); }
+    .layer-table td:first-child { color: #1a1a1a; font-weight: 600; white-space: nowrap; }
+    .layer-table tr:last-child td { border-bottom: none; }
+
+    .flow-arrow { color: var(--accent); font-size: 1.2em; margin: 0 .3em; vertical-align: middle; }
+    .flow-arrow-down { color: var(--accent); font-size: 1.1em; display: block; text-align: center; margin: .1em 0; }
+
+    .metaphor { display: inline-block; background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
+      color: var(--purple); font-size: .6em; padding: 2px 10px; border-radius: 20px;
+      margin-bottom: .3em; font-weight: 600; }
+
+    /* 공식 박스 */
+    .formula-box {
+      background: linear-gradient(135deg, rgba(0,179,125,.06) 0%, rgba(43,125,233,.06) 100%);
+      border: 2px solid var(--accent); border-radius: 12px;
+      padding: .6em 1.2em; text-align: center; margin: .5em 0;
+    }
+    .formula-text { font-size: 1.15em; font-weight: 800; color: #1a1a1a; letter-spacing: .02em; }
+    .formula-sub { font-size: .62em; color: var(--muted); margin-top: .2em; display: block; }
+
+    /* 임팩트 숫자 */
+    .impact-box { text-align: center; padding: .8em .6em;
+      background: linear-gradient(135deg, rgba(0,179,125,.06), rgba(43,125,233,.06));
+      border: 2px solid var(--accent); border-radius: 12px; }
+    .impact-num { display: block; font-size: 3em; font-weight: 900; color: var(--accent); line-height: 1; }
+    .impact-label { font-size: .62em; color: var(--muted); margin-top: .15em; display: block; }
+
+    /* 샌드위치 */
+    .sandwich-layer { border-radius: 8px; padding: .5em 1em; text-align: center; margin: .15em 0; }
+    .sandwich-top { background: rgba(43,125,233,.1); border: 1.5px solid rgba(43,125,233,.4); }
+    .sandwich-mid { background: rgba(0,179,125,.08); border: 1.5px solid rgba(0,179,125,.3); }
+    .sandwich-bot { background: rgba(43,125,233,.1); border: 1.5px solid rgba(43,125,233,.4); }
+
+    /* doom loop */
+    .doom-step { display: flex; align-items: center; gap: 8px; margin: .2em 0; font-size: .78em; }
+    .doom-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* flywheel */
+    .flywheel-step { text-align: center; padding: .5em .3em;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+    .flywheel-icon { font-size: 1.3em; display: block; margin-bottom: .1em; }
+    .flywheel-label { font-size: .62em; font-weight: 700; color: #1a1a1a; display: block; }
+    .flywheel-desc { font-size: .54em; color: var(--muted); display: block; line-height: 1.4; margin-top: .1em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ════════════════════════════════════════════
+     01. COVER
+     ════════════════════════════════════════════ -->
+<section style="text-align:center;">
+  <span class="cover-tag">AI MEETUP 후속 공유 &middot; 2026.04.10</span>
+  <h1 style="font-size:2.2em; line-height:1.15;">하네스 엔지니어링<br><span style="color:var(--accent);">우리가 이미 하고 있는 것</span></h1>
+  <div class="cover-rule"></div>
+  <p style="color:var(--muted); font-size:.75em; max-width:520px; line-height:1.7; margin: 0 auto .8em;">
+    AI가 더 똑똑해진 게 아니다 — <strong style="color:#1a1a1a;">주변 시스템</strong>을 잘 설계했을 뿐이다
+  </p>
+  <div class="cols cols-4" style="margin-top:1.4em; width:600px; margin-left:auto; margin-right:auto;">
+    <div class="stat-box"><span class="stat-num">6</span><span class="stat-label">하네스 레이어</span></div>
+    <div class="stat-box"><span class="stat-num" style="color:var(--blue);">+13.7%p</span><span class="stat-label">하네스만 바꿨을 때</span></div>
+    <div class="stat-box"><span class="stat-num">50+</span><span class="stat-label">우리 스킬 수</span></div>
+    <div class="stat-box"><span class="stat-num">7</span><span class="stat-label">MCP 서버</span></div>
+  </div>
+  <aside class="notes">
+    안녕하세요. 오늘은 어제 AI MEETUP에서 들은 하네스 엔지니어링 이야기를, 우리가 평소에 쓰는 방식과 연결해서 공유해보려 합니다. 사전 지식 없어도 이해할 수 있도록 최대한 쉬운 비유로 설명할게요. 7분 안에 끝낼게요!
+    커버에 보이는 +13.7%p — 이게 오늘 이야기의 핵심입니다. 모델을 교체하지 않고 주변 시스템만 손봤는데 성능이 이만큼 올랐어요. 어떻게 가능한지 지금부터 보겠습니다.
+  </aside>
+</section>
+
+<!-- ════════════════════════════════════════════
+     02. 하네스란? (레이싱카 비유 + 주방 비유)
+     ════════════════════════════════════════════ -->
+<section>
+  <h2>하네스(Harness)란?</h2>
+  <div class="formula-box" style="margin-bottom:.6em;">
+    <div class="formula-text">Agent = Model &nbsp;+&nbsp; <span style="color:var(--accent);">Harness</span></div>
+    <span class="formula-sub">모델이 아무리 똑똑해도 하네스(주변 시스템) 설계가 에이전트 성능을 결정한다</span>
+  </div>
+
+  <div class="cols cols-2" style="margin-top:.4em;">
+    <div class="card" style="border-color:rgba(43,125,233,.3);">
+      <h4 style="color:var(--blue);">🏎️ 레이싱카 비유</h4>
+      <p style="font-size:.78em;"><strong style="color:var(--blue);">드라이버(Model)</strong> — 아무리 실력이 좋아도</p>
+      <p style="font-size:.78em;"><strong style="color:var(--accent);">레이싱카(Harness)</strong> — 차가 구식이면 못 이긴다</p>
+      <p style="font-size:.72em; color:var(--muted); margin-top:.3em;">
+        F1에서 드라이버 실력은 10%, 차의 성능이 90%라는 말이 있다
+      </p>
+    </div>
+    <div class="card">
+      <h4>🍳 주방 비유</h4>
+      <p style="font-size:.78em;"><strong style="color:#1a1a1a;">프롬프트</strong> = "짜장면 하나요" <span style="color:var(--muted);">(What)</span></p>
+      <p style="font-size:.78em;"><strong style="color:var(--accent);">하네스</strong> = "면 7분, 춘장 3분, 맛 검증까지" <span style="color:var(--muted);">(How)</span></p>
+      <p style="font-size:.72em; color:var(--muted); margin-top:.3em;">
+        무엇을 원하는지 말하는 건 쉽다 — 어떻게 도달할지를 설계하는 게 하네스
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:.7em; font-size:.85em;">6개 레이어로 구성</h3>
+  <div style="font-size:.75em; color:var(--text); text-align:center; margin-top:.2em; line-height:2.2;">
+    <code>CLAUDE.md</code> <span class="flow-arrow">&rarr;</span>
+    <code>Hooks</code> <span class="flow-arrow">&rarr;</span>
+    <code>Skills</code> <span class="flow-arrow">&rarr;</span>
+    <code>Memory</code> <span class="flow-arrow">&rarr;</span>
+    <code>MCP</code> <span class="flow-arrow">&rarr;</span>
+    <code>Subagents</code>
+  </div>
+  <div class="hl">
+    <p>하네스 = <strong>모델이 아닌 모든 것</strong> — 코드, 설정, 규칙, 도구, 기억, 실행 로직의 총체</p>
+  </div>
+  <aside class="notes">
+    핵심 공식부터 볼게요. Agent = Model + Harness. 이게 오늘의 전부예요.
+    레이싱카에 비유하면, 드라이버가 모델이고 차가 하네스예요. F1에서 드라이버 실력은 전체 성능의 10%, 나머지 90%는 차의 설계와 팀 전략이라는 말이 있거든요. AI도 마찬가지예요. GPT-4가 얼마나 똑똑한지보다, 그 주변에 뭘 깔아줬느냐가 실제 성능을 결정해요.
+    주방 비유로도 보면, "짜장면 하나요"는 프롬프트예요. 그런데 그걸 만들어내는 주방 시스템 전체 — 면 삶는 시간, 춘장 볶는 순서, 완성 후 맛 검증까지 — 이게 하네스예요. 하네스는 6개 레이어로 구성되는데요, 지금 당장 다 외울 필요 없고, 이따가 하나하나 우리 실제 도구와 연결해드릴게요.
+  </aside>
+</section>
+
+<!-- ════════════════════════════════════════════
+     03. 왜 모델 혼자는 부족한가 + 성과 수치
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>모델 혼자서는 못하는 것 4가지</h2>
+    <span class="metaphor">단카톡 / 계산기 비유</span>
+
+    <div class="cols cols-2" style="margin-top:.5em; gap:10px;">
+      <div class="card">
+        <h4 style="color:var(--blue);">🗂️ 상태 유지 — "이미 잊어버렸어요"</h4>
+        <p style="font-size:.76em;">단체 카톡방에 공지를 올렸는데 메시지 1000개가 쌓이면? 공지가 묻혀버린다</p>
+        <p style="font-size:.72em; color:var(--muted);">→ 하네스가 기억을 저장/복원해줌 (Obsidian, Memory)</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--danger);">🖩 코드 실행 — "공식은 알아도 계산기는 없어요"</h4>
+        <p style="font-size:.76em;">수학 공식을 외워도 큰 수 계산은 계산기가 필요하다. AI도 마찬가지</p>
+        <p style="font-size:.72em; color:var(--muted);">→ 하네스가 실행 환경 제공 (파일시스템, 셸)</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--accent);">🔍 실시간 지식 — "어제 외운 정보예요"</h4>
+        <p style="font-size:.76em;">시험 전날 밤새 외운 내용 vs 오픈북 시험 — 검색 가능한 상태가 훨씬 낫다</p>
+        <p style="font-size:.72em; color:var(--muted);">→ 하네스가 도구 연결 (MCP: Jira, Context7)</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--warn);">⚙️ 환경 설정 — "재료 없이 레시피만 알아요"</h4>
+        <p style="font-size:.76em;">요리 방법을 알아도 재료와 도구가 없으면 만들 수 없다</p>
+        <p style="font-size:.72em; color:var(--muted);">→ 하네스가 패키지 설치, 샌드박스 구성</p>
+      </div>
+    </div>
+    <div class="hl">
+      <p>모델은 "두뇌"일 뿐 — 손발, 기억, 도구, 환경을 붙여주는 게 하네스의 역할</p>
+    </div>
+    <aside class="notes">
+      모델이 아무리 똑똑해도 혼자서 못하는 것이 딱 4가지 있어요.
+      첫째, 기억 유지. 단카톡 공지 비유가 딱 맞아요. 처음엔 잘 보이는데 메시지가 1000개 쌓이면 중요한 공지가 묻혀버리죠. AI도 대화가 길어지면 앞의 중요한 지시를 "잊어버려요". 이걸 Context Rot, 컨텍스트 부패라고 불러요.
+      둘째, 코드 실행. AI는 코드를 쓸 줄 알아도 실행은 못 해요. 수학 공식을 아는 것과 계산기를 가진 것은 다르죠.
+      셋째, 실시간 지식. AI의 지식은 학습 시점에 멈춰있어요. 오픈북 시험처럼 검색할 수 있게 해주는 게 MCP예요.
+      넷째, 환경 설정. "패키지 설치해줘"를 말할 수는 있는데 실제로 설치하려면 환경이 있어야 해요.
+      이 4가지를 모두 해결해주는 게 하네스입니다.
+    </aside>
+  </section>
+
+  <!-- 03-sub: 성과 수치 -->
+  <section>
+    <h2>하네스만 바꿨더니 — 실제 수치</h2>
+    <span class="metaphor">같은 선수, 다른 코치</span>
+
+    <div class="cols cols-3" style="margin-top:.5em; align-items:center;">
+      <div class="stat-box" style="padding:1.2em .5em;">
+        <span class="stat-num" style="color:var(--warn);">52.8%</span>
+        <span class="stat-label" style="font-size:.7em;">하네스 최적화 전</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:2em; color:var(--accent);">→</div>
+        <div style="font-size:.65em; color:var(--muted); line-height:1.4; margin-top:.3em;">
+          <strong style="color:#1a1a1a;">모델 교체 없이</strong><br>
+          하네스 설계만 개선
+        </div>
+      </div>
+      <div class="impact-box">
+        <span class="impact-num">66.5%</span>
+        <span class="impact-label">하네스 최적화 후<br><strong style="color:var(--accent);">+13.7%p</strong></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.7em; border-color:rgba(43,125,233,.25);">
+      <h4 style="color:var(--blue);">⚽ 축구팀 비유로 이해하면</h4>
+      <div class="cols cols-3" style="margin-top:.3em;">
+        <div style="text-align:center; font-size:.74em;">
+          <div style="font-size:1.4em;">🏃</div>
+          <strong>선수단</strong><br>
+          <span style="color:var(--muted);">그대로 유지<br>(= 모델 동일)</span>
+        </div>
+        <div style="text-align:center; font-size:.74em;">
+          <div style="font-size:1.4em;">📋</div>
+          <strong>코치진 교체</strong><br>
+          <span style="color:var(--muted);">전술/훈련 방식 개선<br>(= 하네스 최적화)</span>
+        </div>
+        <div style="text-align:center; font-size:.74em;">
+          <div style="font-size:1.4em; color:var(--accent);">🏆</div>
+          <strong style="color:var(--accent);">성적 급상승</strong><br>
+          <span style="color:var(--muted);">같은 팀인데<br>결과가 달라짐</span>
+        </div>
+      </div>
+    </div>
+    <div class="hl">
+      <p><strong>LangChain이 Terminal Bench 2.0에서 실증</strong> — 모델 선택 못지않게 하네스 설계가 중요하다</p>
+    </div>
+    <aside class="notes">
+      자, 이게 추상적인 이야기가 아니라는 증거를 보여드릴게요.
+      LangChain이 Terminal Bench 2.0이라는 벤치마크에서 실험했어요. 모델은 그대로 두고 하네스만 손봤더니 52.8%에서 66.5%로 올랐어요. 13.7%p가 올랐는데, 이게 얼마나 큰 건지 맥락을 드리면, 보통 신형 모델 한 세대가 올라가면 10~15%p 오르거든요. 즉, 하네스 최적화 하나가 모델 세대 교체와 맞먹는 효과를 냈어요.
+      축구팀 비유로 보면, 선수단(모델)은 그대로인데 코치진(하네스)을 바꿨더니 성적이 확 올랐다는 거예요. 이게 오늘 하네스 이야기를 하는 이유입니다.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     04. 5가지 원자 패턴 + Doom Loop + Reasoning Sandwich
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>5가지 원자 패턴</h2>
+    <span class="metaphor">일상 비유</span>
+    <div class="cols cols-5" style="margin-top:.5em;">
+      <div class="pattern-box">
+        <span class="pattern-icon">🚫</span>
+        <span class="pattern-name">Block</span>
+        <span class="pattern-desc">교통법규<br>빨간불 = 못 감<br><em style="color:var(--accent);">Hook으로 강제</em></span>
+      </div>
+      <div class="pattern-box">
+        <span class="pattern-icon">💡</span>
+        <span class="pattern-name">Suggest</span>
+        <span class="pattern-desc">에티켓<br>에스컬레이터 우측<br><em style="color:var(--accent);">Skill로 가이드</em></span>
+      </div>
+      <div class="pattern-box">
+        <span class="pattern-icon">🔄</span>
+        <span class="pattern-name">Loop</span>
+        <span class="pattern-desc">운전면허 시험<br>합격까지 재응시<br><em style="color:var(--accent);">종료조건이 핵심</em></span>
+      </div>
+      <div class="pattern-box">
+        <span class="pattern-icon">👀</span>
+        <span class="pattern-name">Evaluate</span>
+        <span class="pattern-desc">코드리뷰<br>내 코드 남이 검증<br><em style="color:var(--accent);">생성자 ≠ 평가자</em></span>
+      </div>
+      <div class="pattern-box">
+        <span class="pattern-icon">📖</span>
+        <span class="pattern-name">Context</span>
+        <span class="pattern-desc">오픈북 시험<br>감 대신 자료 제공<br><em style="color:var(--accent);">사전 조립</em></span>
+      </div>
+    </div>
+
+    <div class="cols cols-2" style="margin-top:.6em;">
+      <div class="card" style="border-color:rgba(217,48,37,.2);">
+        <h4 style="color:var(--danger);">⚠️ Doom Loop — 하지 말아야 할 패턴</h4>
+        <p style="font-size:.74em;">게임 보스한테 계속 같은 스킬로 지고 있는데 조금씩 변형하며 반복</p>
+        <div class="doom-step"><div class="doom-dot" style="background:var(--danger);"></div><span>파일 수정 → 실패 → 비슷한 수정 → 실패 → ...</span></div>
+        <p style="font-size:.68em; color:var(--muted);">→ <strong>Block 패턴</strong>으로 해결: N번 반복 후 접근법 재고 강제</p>
+      </div>
+      <div class="card" style="border-color:rgba(43,125,233,.25);">
+        <h4 style="color:var(--blue);">🥪 Reasoning Sandwich — 다음 슬라이드 →</h4>
+        <p style="font-size:.74em;">모든 단계에 최대 추론을 쏟는 것보다 전략적으로 배분하는 게 더 좋다</p>
+        <div style="font-size:.68em; text-align:center; margin-top:.3em; color:var(--muted);">
+          <strong style="color:var(--blue);">강한 추론</strong> → 일반 추론 → <strong style="color:var(--blue);">강한 추론</strong>
+        </div>
+        <p style="font-size:.68em; color:var(--muted); margin-top:.2em;">일률적 최대 추론 53.9% &lt; 샌드위치 66.5%</p>
+      </div>
+    </div>
+    <aside class="notes">
+      모든 하네스는 이 5가지 원자 패턴의 조합이에요.
+      Block은 교통법규, Suggest는 에스컬레이터 문화, Loop는 운전면허 시험, Evaluate는 코드리뷰, Context는 오픈북 시험.
+      그런데 오늘 두 가지를 추가로 설명하고 싶어요. 하나는 절대 하면 안 되는 Doom Loop, 하나는 꼭 써야 하는 Reasoning Sandwich예요. 다음 슬라이드에서 자세히 볼게요.
+    </aside>
+  </section>
+
+  <!-- 04-sub: Reasoning Sandwich -->
+  <section>
+    <h2>Reasoning Sandwich — 추론도 전략이다</h2>
+    <span class="metaphor">시험 전략 비유</span>
+
+    <p style="font-size:.78em; color:var(--muted); margin-bottom:.5em;">
+      시험 볼 때 "모든 문제를 똑같이 집중해서 풀면 시간이 부족하다"는 경험 해봤죠?
+    </p>
+
+    <div style="max-width:500px; margin: 0 auto;">
+      <div class="sandwich-layer sandwich-top">
+        <span style="font-size:.78em; font-weight:700; color:var(--blue);">🧠 높은 추론 — 계획 단계</span>
+        <div style="font-size:.66em; color:var(--muted);">티켓 분석 / 영향 범위 파악 / 설계 결정 → 꼼꼼히</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="sandwich-layer sandwich-mid">
+        <span style="font-size:.78em; font-weight:700; color:var(--accent);">⚡ 적당한 추론 — 구현 단계</span>
+        <div style="font-size:.66em; color:var(--muted);">반복 작업 / 코드 작성 / 리팩토링 → 빠르게</div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="sandwich-layer sandwich-bot">
+        <span style="font-size:.78em; font-weight:700; color:var(--blue);">🔍 높은 추론 — 검증 단계</span>
+        <div style="font-size:.66em; color:var(--muted);">테스트 / 리뷰 / PR 작성 → 다시 꼼꼼히</div>
+      </div>
+    </div>
+
+    <div class="cols cols-2" style="margin-top:.6em;">
+      <div class="card" style="border-color:rgba(217,48,37,.2); text-align:center;">
+        <h4 style="color:var(--danger);">일률 최대 추론</h4>
+        <div style="font-size:1.6em; font-weight:800; color:var(--danger);">53.9%</div>
+        <div style="font-size:.68em; color:var(--muted);">모든 단계에 최대 집중<br>"더 열심히 = 더 좋다?" → ❌</div>
+      </div>
+      <div class="card" style="border-color:rgba(0,179,125,.3); text-align:center;">
+        <h4>샌드위치 전략</h4>
+        <div style="font-size:1.6em; font-weight:800; color:var(--accent);">66.5%</div>
+        <div style="font-size:.68em; color:var(--muted);">전략적 배분<br>"더 많은 연산 ≠ 더 좋은 결과" → ✅</div>
+      </div>
+    </div>
+    <div class="hl-blue">
+      <p>우리 팀 적용: <code>Opus 4.6</code>(계획·검증) + <code>Sonnet 4.6</code>(구현) 조합이 바로 Reasoning Sandwich</p>
+    </div>
+    <aside class="notes">
+      Reasoning Sandwich를 설명할게요. 시험 볼 때 전략 생각해본 적 있죠? 처음에 어려운 문제 파악하고, 중간에 쉬운 것 빠르게 풀고, 마지막에 다시 검토하는 거요. AI도 마찬가지예요.
+      계획 단계에선 강한 추론이 필요해요. 뭘 만들지, 어디를 고쳐야 하는지. 구현 단계는 이미 방향이 정해졌으니 빠르게. 그리고 검증 단계는 다시 꼼꼼히.
+      실험에서는 모든 단계에 최대 추론을 쏟았을 때 53.9%, 샌드위치 전략을 썼을 때 66.5%가 나왔어요. 더 많이 쓸수록 좋은 게 아니라 전략적으로 배분하는 게 더 낫다는 거예요.
+      우리 팀에서 Opus로 계획하고 Sonnet으로 구현하는 거, 이게 이미 Reasoning Sandwich예요.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     05. 우리가 평소에 일하는 방식
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>우리가 평소에 일하는 방식</h2>
+    <span class="metaphor">아이언맨의 작업실</span>
+    <h3 style="margin-top:.4em; font-size:.9em;">J.A.R.V.I.S. 시스템 — AI 비서와 함께하는 하루</h3>
+
+    <div style="font-size:.75em; color:var(--text); text-align:center; margin:.6em 0; line-height:2;">
+      <code>아침 브리핑</code> <span class="flow-arrow">&rarr;</span>
+      <code>스크럼 작성</code> <span class="flow-arrow">&rarr;</span>
+      <code>티켓 분석</code> <span class="flow-arrow">&rarr;</span>
+      <code>코드 구현</code> <span class="flow-arrow">&rarr;</span>
+      <code>PR 생성</code> <span class="flow-arrow">&rarr;</span>
+      <code>위클리</code>
+    </div>
+
+    <div class="cols cols-3" style="margin-top:.4em;">
+      <div class="card">
+        <h4>Skills (50+)</h4>
+        <ul style="margin:0; font-size:.75em;">
+          <li>팀: write-scrum, qa-fix, pr-review-list…</li>
+          <li>개인: planning-with-files, pr-generator, insights-analyzer…</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Agents (9)</h4>
+        <ul style="margin:0; font-size:.75em;">
+          <li>scrum-master</li>
+          <li>context-engineer</li>
+          <li>dev-workflow-master</li>
+          <li>test-scenario-analyst + writer + reviewer</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>MCP Servers (7)</h4>
+        <ul style="margin:0; font-size:.75em;">
+          <li>Obsidian KB (649 notes)</li>
+          <li>Jira / Confluence</li>
+          <li>Context7, Playwright, Time…</li>
+        </ul>
+      </div>
+    </div>
+    <div class="hl">
+      <p>토니 스타크가 자비스한테 "이거 분석해줘, 저거 만들어줘" 하는 것처럼 — 스크럼, 코드 분석, PR까지 AI가 함께하는 환경</p>
+    </div>
+    <aside class="notes">
+      제가 J.A.R.V.I.S.라는 AI 비서 시스템을 만들어서 쓰고 있어요. 아이언맨의 자비스처럼요. 아침에 출근하면 브리핑을 받고, 스크럼을 자동으로 써주고, Jira 티켓 분석부터 PR 생성까지 도와줍니다. 팀용 스킬 20개, 개인 스킬 30개 이상, 에이전트 9개, MCP 서버 7개로 구성되어 있어요. Obsidian vault에는 649개 파일로 장기 기억을 유지하고요. 근데 문제가 하나 있어요 — 이게 다 따로따로 놀아요. 이 이야기를 다음 슬라이드에서 할게요.
+    </aside>
+  </section>
+
+  <!-- 05-sub: 파이프라인 상세 -->
+  <section>
+    <h2>데이터 파이프라인 맵</h2>
+    <h3 style="font-size:.88em;">이미 구축된 자동화 흐름</h3>
+
+    <div class="cols cols-2" style="margin-top:.4em;">
+      <div class="card">
+        <h4>스크럼 &rarr; 위클리 파이프라인 <span class="badge badge-done">구축완료</span></h4>
+        <div style="font-size:.72em; line-height:2.1; margin-top:.3em;">
+          <code>팀원 입력</code> <span class="flow-arrow">&rarr;</span> <code>write-scrum</code> <span class="flow-arrow">&rarr;</span> <code>OpenSearch</code><br>
+          &nbsp;&nbsp;<span class="flow-arrow">&darr;</span> <code>scrum-summarize</code><br>
+          &nbsp;&nbsp;<span class="flow-arrow">&darr;</span> <code>write-weekly</code><br>
+          &nbsp;&nbsp;<span class="flow-arrow">&darr;</span> <code>weekly-report</code>
+        </div>
+      </div>
+      <div class="card">
+        <h4>개발 작업 파이프라인 <span class="badge badge-pend">수동 연결</span></h4>
+        <div style="font-size:.72em; line-height:2.1; margin-top:.3em;">
+          <code>Jira 티켓</code> <span style="color:var(--danger);">&rarr; (수동)</span><br>
+          <code>planning-with-files</code> <span style="color:var(--danger);">&rarr; (수동)</span><br>
+          <code>코드 구현</code> <span style="color:var(--danger);">&rarr; (수동)</span><br>
+          <code>pr-generator</code>
+        </div>
+      </div>
+    </div>
+    <div class="hl-warn">
+      <p style="color:var(--warn);">스킬 하나하나는 훌륭 — 하지만 스킬 간 <strong>자동 연결</strong>이 없다</p>
+    </div>
+    <aside class="notes">
+      구체적으로 보면, 스크럼에서 위클리까지는 자동화가 되어있어요. 팀원이 입력하면 write-scrum이 Confluence에 올리고, OpenSearch에 쌓이고, 그걸 기반으로 위클리까지 나오죠. 근데 개발 작업은요? Jira 티켓 확인하고, 수동으로 planning-with-files 호출하고, 코드 짜고, 또 수동으로 pr-generator 호출해야 해요. 각 스킬은 훌륭한데 사이사이가 다 수동이에요.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     06. 문제 인식
+     ════════════════════════════════════════════ -->
+<section>
+  <h2>문제 — 재료는 있는데 레시피가 없다</h2>
+  <span class="metaphor">주방 비유</span>
+
+  <div class="cols cols-2" style="margin-top:.5em;">
+    <div class="card" style="border-color:rgba(217,48,37,.25);">
+      <h4 style="color:var(--danger);">현재 상태</h4>
+      <div class="timeline" style="margin-top:.4em;">
+        <div class="timeline-item warn">
+          <span class="timeline-title">planning-with-files로 분석</span>
+          <span class="timeline-desc" style="color:var(--danger);">&rarr; (수동) pr-generator 호출</span>
+        </div>
+        <div class="timeline-item warn">
+          <span class="timeline-title">morning-briefing 실행</span>
+          <span class="timeline-desc" style="color:var(--danger);">&rarr; (수동) write-my-scrum 실행</span>
+        </div>
+        <div class="timeline-item warn">
+          <span class="timeline-title">insights-analyzer 실행</span>
+          <span class="timeline-desc" style="color:var(--danger);">&rarr; (수동) weekly-share 생성</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>🍳 주방 비유로 보면</h4>
+      <ul style="font-size:.82em;">
+        <li>냉장고에 <strong style="color:#1a1a1a;">재료</strong>는 엄청 많음 (50+ 스킬)</li>
+        <li><strong style="color:#1a1a1a;">레시피</strong>가 없음 (오케스트레이션 부재)</li>
+        <li>매번 "양파 어디있지?" 하면서 찾음</li>
+        <li>볶고 나서 "이제 고기 꺼내야지"</li>
+        <li style="color:var(--accent); font-weight:600; margin-top:.4em;">✅ 필요한 건 주방장! (Orchestrator)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="hl">
+    <p>"스킬이 없다"가 아니라 <strong>"스킬 간 연결이 없다"</strong>가 핵심 문제</p>
+  </div>
+  <aside class="notes">
+    지금 상태를 솔직히 보면, 냉장고에 재료는 엄청 많은데 레시피가 없는 주방이에요. 양파도 있고, 고기도 있고, 소스도 있는데, 매번 "양파 어디 있더라?" 하면서 찾고, 볶고 나서 "이제 고기 꺼내야지" 하면서 수동으로 연결하는 거예요. 문제는 "재료가 없다"가 아니라 "레시피가 없다", 즉 오케스트레이션이 없다는 거죠. 그래서 필요한 건 주방장입니다.
+  </aside>
+</section>
+
+<!-- ════════════════════════════════════════════
+     07. 하네스로 묶으면? — 6레이어 매핑
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>하네스로 묶으면? — 6레이어 매핑</h2>
+    <table class="layer-table" style="margin-top:.3em;">
+      <tr>
+        <th style="width:15%;">레이어</th>
+        <th style="width:22%;">주방 비유</th>
+        <th style="width:35%;">우리가 이미 가진 것</th>
+        <th style="width:13%;">패턴</th>
+      </tr>
+      <tr>
+        <td><code>CLAUDE.md</code></td>
+        <td style="color:var(--muted);">조리 규칙 매뉴얼</td>
+        <td>core-rules, git-rules, pr-rules, kb-workflow</td>
+        <td><span style="color:var(--warn);">Context</span></td>
+      </tr>
+      <tr>
+        <td><code>Hooks</code></td>
+        <td style="color:var(--muted);">화재 경보기</td>
+        <td>SessionStart (MCP 자동시작), PostToolUse, Stop</td>
+        <td><span style="color:var(--danger);">Block</span></td>
+      </tr>
+      <tr>
+        <td><code>Skills</code></td>
+        <td style="color:var(--muted);">표준 레시피북</td>
+        <td>write-scrum, qa-fix, pr-generator, unit-test 등 50+</td>
+        <td><span style="color:var(--accent);">Suggest</span></td>
+      </tr>
+      <tr>
+        <td><code>Memory</code></td>
+        <td style="color:var(--muted);">단골 취향 노트</td>
+        <td>Obsidian vault (649) + auto-memory + KB docs</td>
+        <td><span style="color:var(--warn);">Context</span></td>
+      </tr>
+      <tr>
+        <td><code>MCP</code></td>
+        <td style="color:var(--muted);">식자재 배달 서비스</td>
+        <td>Obsidian KB, Jira, Confluence, Context7, Playwright…</td>
+        <td><span style="color:var(--warn);">Context</span></td>
+      </tr>
+      <tr>
+        <td><code>Subagents</code></td>
+        <td style="color:var(--muted);">전문 셰프 팀</td>
+        <td>scrum-master, context-engineer, test-analyst/writer/reviewer</td>
+        <td><span style="color:var(--purple);">Evaluate</span></td>
+      </tr>
+    </table>
+    <div class="hl">
+      <p>우리는 이미 6레이어를 거의 다 채우고 있다 — <strong>"하네스"라는 이름으로 인식하고 묶어본 적이 없었을 뿐</strong></p>
+    </div>
+    <aside class="notes">
+      여기가 오늘의 핵심이에요. 하네스의 6레이어에 우리가 이미 가진 것을 대입해보면요 — CLAUDE.md에 팀 규칙 넣고 있죠? Context 패턴이에요. Hooks로 세션 시작할 때 MCP 서버 자동 시작하죠? Block 패턴이에요. Skills 50개 넘게 쓰고 있죠? Suggest 패턴이고요. Obsidian에 장기 기억 유지하고, MCP로 Jira/Confluence 연결하고, Subagents로 역할 나눠서 일하고 있어요. 놀라운 건 — 우리가 이미 6레이어를 거의 다 채우고 있다는 거예요. 그런데 이걸 "하네스"라는 이름으로 체계적으로 묶어본 적이 없었던 거죠.
+    </aside>
+  </section>
+
+  <!-- 07-sub: 구체적 매핑 예시 -->
+  <section>
+    <h2>구체적 매핑 — 실제 사례</h2>
+    <div class="cols cols-2" style="margin-top:.4em;">
+      <div class="card">
+        <h4 style="color:var(--danger);">🚫 Block 패턴 (이미 적용)</h4>
+        <p style="font-size:.74em; margin:0;"><code>SessionStart Hook</code> → MCP 서버 자동 실행</p>
+        <p style="font-size:.72em; margin:.1em 0 0; color:var(--muted);">세션 시작 시 물리적 강제 — LLM이 무시 불가</p>
+        <p style="font-size:.72em; margin:.1em 0 0; color:var(--muted);">+ Doom Loop 방지: 같은 파일 N번 수정 후 접근법 재고 강제</p>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--purple);">👀 Evaluate 패턴 (이미 적용)</h4>
+        <p style="font-size:.74em; margin:0;">
+          <code>Analyst</code> → <code>Writer</code> → <code>Reviewer</code> → <code>lint-guard</code>
+        </p>
+        <p style="font-size:.72em; margin:.1em 0 0; color:var(--muted);">생성자 ≠ 평가자 — 자기 채점 편향 방지</p>
+      </div>
+    </div>
+    <div class="cols cols-2" style="margin-top:.6em;">
+      <div class="card">
+        <h4 style="color:var(--warn);">📖 Context 패턴 (이미 적용)</h4>
+        <ul style="margin:0; font-size:.72em;">
+          <li><code>team-kb-workflow</code> — KB 신뢰도 평가 (오픈북)</li>
+          <li><code>ToolSearch</code> — 필요할 때만 도구 로드 (Progressive Disclosure)</li>
+          <li>Obsidian vault — 649 파일, 장기 기억 (Context Rot 방지)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:var(--accent);">🥪 Reasoning Sandwich (이미 적용)</h4>
+        <ul style="margin:0; font-size:.72em;">
+          <li><code>Opus 4.6</code> — 계획·설계·PR 검증 (높은 추론)</li>
+          <li><code>Sonnet 4.6</code> — 반복 구현 작업 (빠른 추론)</li>
+          <li>단계별 모델 배분 = 비용↓ 품질↑</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">
+      좀 더 구체적으로 볼게요. Block 패턴 — 세션 시작할 때 Hook으로 MCP 서버가 자동 시작되죠. LLM이 아무리 "MCP 없이 해볼게요" 해도 막혀요. Evaluate 패턴 — 테스트 파이프라인에서 시나리오 분석가, 테스트 작성자, 리뷰어가 역할이 나눠져 있잖아요. 생성자와 평가자가 분리된 거예요. Context 패턴 — KB 워크플로우에서 작업 전에 KB 신뢰도를 평가하고, ToolSearch로 필요한 도구만 로드하고, Obsidian으로 컨텍스트를 관리해요. Reasoning Sandwich — Opus로 계획하고 Sonnet으로 구현하는 거 이미 하고 있죠.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     08. 다음 단계 — 주방장을 고용하자
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>다음 단계 — 주방장을 고용하자</h2>
+    <span class="metaphor">오케스트레이터 = 주방장</span>
+
+    <div class="cols cols-3" style="margin-top:.4em;">
+      <div class="card" style="border-color:rgba(43,125,233,.3);">
+        <h4 style="color:var(--blue);">dev-flow <span class="badge badge-new">1순위</span></h4>
+        <div style="font-size:.72em; line-height:1.9;">
+          <code>Jira 티켓</code><br>
+          <span class="flow-arrow-down">&darr;</span> KB 체크 + 코드 분석<br>
+          <span class="flow-arrow-down">&darr;</span> 플래닝 자동 생성<br>
+          <span class="flow-arrow-down">&darr;</span> 구현 + 테스트<br>
+          <span class="flow-arrow-down">&darr;</span> PR 자동 생성
+        </div>
+        <p style="font-size:.67em; color:var(--muted); margin-top:.3em;">End-to-end 개발 자동화</p>
+      </div>
+      <div class="card" style="border-color:rgba(0,179,125,.3);">
+        <h4>daily-copilot <span class="badge badge-new">2순위</span></h4>
+        <div style="font-size:.72em; line-height:1.9;">
+          <code>AM: 아침 브리핑</code><br>
+          <span class="flow-arrow-down">&darr;</span> 일정 + PR + 티켓<br>
+          <span class="flow-arrow-down">&darr;</span> 스크럼 초안 생성<br>
+          <code>PM: 하루 정리</code><br>
+          <span class="flow-arrow-down">&darr;</span> 일지 자동 작성
+        </div>
+        <p style="font-size:.67em; color:var(--muted); margin-top:.3em;">하루 자동화</p>
+      </div>
+      <div class="card" style="border-color:rgba(212,133,10,.25);">
+        <h4 style="color:var(--warn);">weekly-orchestrator</h4>
+        <div style="font-size:.72em; line-height:1.9;">
+          <code>OpenSearch 데이터</code><br>
+          <span class="flow-arrow-down">&darr;</span> 인사이트 분석<br>
+          <span class="flow-arrow-down">&darr;</span> 위클리 자동 생성<br>
+          <span class="flow-arrow-down">&darr;</span> Confluence 업로드
+        </div>
+        <p style="font-size:.67em; color:var(--muted); margin-top:.3em;">주간 보고 자동화</p>
+      </div>
+    </div>
+
+    <div class="cols cols-2" style="margin-top:.5em;">
+      <div class="card">
+        <h4>Block 강화 예정</h4>
+        <p style="font-size:.76em;">Hook: PR 생성 전 KB 신뢰도 <strong>강제</strong> 체크 + Doom Loop 감지</p>
+      </div>
+      <div class="card">
+        <h4>Evaluate 강화 예정</h4>
+        <p style="font-size:.76em;">적대적 테스터: "어떻게 이 코드를 <strong>무너뜨릴</strong> 수 있을까?"</p>
+      </div>
+    </div>
+    <aside class="notes">
+      다음 단계는 "주방장을 고용하는 것"이에요. 재료와 레시피는 있으니, 주방장이 "오늘 메뉴는 이거, 이 순서로 조리해, 맛 검증은 저쪽 셰프가 해" 라고 지휘하는 거예요. 첫 번째는 dev-flow — Jira 티켓 들어오면 분석부터 PR까지 알아서 해주는 오케스트레이터예요. 두 번째는 daily-copilot — 아침엔 브리핑, 저녁엔 일지를 자동으로. 세 번째는 weekly-orchestrator — 금요일에 주간 보고를 알아서 만들어주는 거죠. Block 패턴도 강화할 건데요, PR 만들기 전에 KB 신뢰도를 Hook으로 강제 체크하고, Doom Loop 감지도 추가해서 같은 패턴을 반복하면 자동으로 멈추게 할 거예요.
+    </aside>
+  </section>
+
+  <!-- 08-sub: dev-flow 실제 예시 -->
+  <section>
+    <h2>dev-flow 실제 시나리오</h2>
+    <h3 style="font-size:.85em; margin-top:.3em; color:var(--muted);">SPPRODUCT-87001 "상품 상세 GNB 개선" 티켓이 들어왔다면?</h3>
+
+    <div style="margin-top:.4em;">
+      <div class="timeline">
+        <div class="timeline-item blue">
+          <span class="timeline-title"><code style="font-size:.8em;">① Jira MCP</code> — 티켓 자동 분석 <span style="color:var(--warn); font-size:.75em;">[Context 패턴]</span></span>
+          <span class="timeline-desc">티켓 설명 + 댓글 + 첨부파일 읽기 → 요구사항 구조화</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-title"><code style="font-size:.8em;">② KB 신뢰도 체크</code> <span style="color:var(--warn); font-size:.75em;">[Context 패턴]</span></span>
+          <span class="timeline-desc">GNB KB 65점/75점 → ⚠️ 코드 분석 먼저 권장 (감 대신 자료로)</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-title"><code style="font-size:.8em;">③ planning-with-files</code> <span style="color:var(--accent); font-size:.75em;">[Suggest 패턴]</span></span>
+          <span class="timeline-desc">영향 범위 분석 → task_plan.md 자동 생성 (수정 파일 3개, 테스트 2개)</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-title"><code style="font-size:.8em;">④ 구현 + unit-test</code> <span style="color:var(--blue); font-size:.75em;">[Loop + Evaluate + Reasoning Sandwich]</span></span>
+          <span class="timeline-desc">Opus 계획 → Sonnet 구현 → test-writer → test-reviewer 검증 (통과까지 반복)</span>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-title"><code style="font-size:.8em;">⑤ pr-generator</code> <span style="color:var(--danger); font-size:.75em;">[Block + Context]</span></span>
+          <span class="timeline-desc">Hook: KB 신뢰도 재체크 강제 → PR 규칙 자동 적용 → PR 생성 + Jira 상태 변경</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl">
+      <p>5가지 원자 패턴 + Reasoning Sandwich가 한 티켓 안에서 <strong>전부 동작</strong></p>
+    </div>
+    <aside class="notes">
+      구체적으로 어떻게 돌아가는지 볼게요. 가상의 Jira 티켓 하나가 들어왔다고 해볼게요. "상품 상세 GNB 개선" 티켓이에요. 첫 번째, Jira MCP가 티켓을 자동으로 읽어서 요구사항을 구조화해요. Context 패턴이죠. 두 번째, KB 신뢰도를 체크해요 — GNB 관련 KB가 65점인데 필요 점수가 75점이라 코드 분석을 먼저 돌려요. 세 번째, planning-with-files 스킬이 영향 범위를 분석하고 작업 계획서를 자동으로 만들어요. Suggest 패턴이에요. 네 번째, Reasoning Sandwich가 동작해요. Opus가 계획하고, Sonnet이 구현하고, test-writer와 test-reviewer가 검증하는데, 통과할 때까지 반복해요. Loop와 Evaluate가 동시에. 마지막으로 PR 만들 때 Hook이 KB 신뢰도를 다시 체크해요. 5가지 패턴이 한 티켓 안에서 전부 동작하는 거예요. 이걸 dev-flow 오케스트레이터가 자동으로 엮어주는 게 목표입니다.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     09. 경량화 + Eval 플라이휠
+     ════════════════════════════════════════════ -->
+<section>
+  <section>
+    <h2>핵심 교훈 — 경량화</h2>
+    <span class="metaphor">건축 비유</span>
+    <h3 style="font-size:.9em; margin-top:.3em;">"하네스는 <span style="color:var(--accent);">비계(scaffolding)</span>다"</h3>
+
+    <div class="cols cols-3" style="margin-top:.5em;">
+      <div class="card" style="text-align:center;">
+        <h4 style="color:var(--danger);">V1</h4>
+        <p style="font-size:2em; line-height:1.2; margin:.2em 0;">7</p>
+        <p style="font-size:.72em; color:var(--muted);">구성요소<br>토큰 15% 소모</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <h4 style="color:var(--warn);">V2</h4>
+        <p style="font-size:2em; line-height:1.2; margin:.2em 0;">3</p>
+        <p style="font-size:.72em; color:var(--muted);">구성요소<br>핵심만 남김</p>
+      </div>
+      <div class="card" style="text-align:center; border-color:rgba(0,179,125,.3);">
+        <h4>V3?</h4>
+        <p style="font-size:2em; line-height:1.2; margin:.2em 0; color:var(--accent);">?</p>
+        <p style="font-size:.72em; color:var(--muted);">Eval 기반으로<br>계속 제거</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.5em; border-color:rgba(217,48,37,.25);">
+      <h4 style="color:var(--danger);">하지만 0이 되지는 않는다 — 모델 세대를 넘어 살아있는 문제</h4>
+      <div class="cols cols-3" style="margin-top:.3em;">
+        <p style="font-size:.72em; text-align:center;"><strong>Self-Eval 편향</strong><br><span style="color:var(--muted);">자기가 쓴 코드를<br>"잘했지" 하고 넘김</span></p>
+        <p style="font-size:.72em; text-align:center;"><strong>레이어 간 경계</strong><br><span style="color:var(--muted);">단위테스트 PASS<br>E2E에서 폭발</span></p>
+        <p style="font-size:.72em; text-align:center;"><strong>모호성</strong><br><span style="color:var(--muted);">"로그인 만들어줘"<br>스펙 부족</span></p>
+      </div>
+    </div>
+    <aside class="notes">
+      핵심 교훈이에요. 하네스는 건물 짓는 비계 같은 거예요 — 건물 다 올라가면 일부는 떼도 돼요. 실제로 V1에서 7개 구성요소였던 게 V2에서 3개로 줄었고, 앞으로도 계속 줄일 수 있어요. 모델이 좋아질수록 불필요한 패턴은 제거하면 됩니다. 하지만 0이 되지는 않아요. 세 가지는 모델이 아무리 똑똑해져도 남아요 — 자기 평가 편향, 레이어 간 경계, 모호성. 이 세 가지 때문에 하네스는 계속 필요해요.
+    </aside>
+  </section>
+
+  <!-- 09-sub: Eval 플라이휠 -->
+  <section>
+    <h2>Eval 플라이휠 — 쓸수록 좋아진다</h2>
+    <span class="metaphor">유튜브 알고리즘 비유</span>
+
+    <p style="font-size:.75em; color:var(--muted); margin-bottom:.5em;">
+      유튜브를 볼수록 → 알고리즘이 취향 파악 → 더 좋은 영상 추천 → 더 많이 봄 → 반복
+    </p>
+
+    <div class="cols cols-5" style="margin-top:.3em;">
+      <div class="flywheel-step">
+        <span class="flywheel-icon">▶️</span>
+        <span class="flywheel-label">사용량 ↑</span>
+        <span class="flywheel-desc">에이전트를 더 많이 쓴다</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:1.4em; color:var(--accent);">→</div>
+      <div class="flywheel-step">
+        <span class="flywheel-icon">📊</span>
+        <span class="flywheel-label">Trace 수집</span>
+        <span class="flywheel-desc">모든 실행 기록이 쌓인다</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:1.4em; color:var(--accent);">→</div>
+      <div class="flywheel-step">
+        <span class="flywheel-icon">🧪</span>
+        <span class="flywheel-label">Eval 생성</span>
+        <span class="flywheel-desc">실패 패턴 → 테스트 케이스</span>
+      </div>
+    </div>
+    <div style="text-align:center; font-size:1.8em; color:var(--accent); margin:.2em 0;">↙&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↘</div>
+    <div class="cols cols-5">
+      <div class="flywheel-step" style="border-color:rgba(0,179,125,.3);">
+        <span class="flywheel-icon">✅</span>
+        <span class="flywheel-label" style="color:var(--accent);">성능 향상</span>
+        <span class="flywheel-desc">하네스가 개선된다</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:1.4em; color:var(--accent);">←</div>
+      <div class="flywheel-step">
+        <span class="flywheel-icon">🔧</span>
+        <span class="flywheel-label">하네스 개선</span>
+        <span class="flywheel-desc">rules/skills 수정</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:1.4em; color:var(--accent);">←</div>
+      <div class="flywheel-step">
+        <span class="flywheel-icon">🏔️</span>
+        <span class="flywheel-label">Hill Climbing</span>
+        <span class="flywheel-desc">Eval 점수 올리는 방향으로 반복 수정</span>
+      </div>
+    </div>
+
+    <div class="hl-blue">
+      <p><strong>"Eval은 하네스의 학습 데이터다"</strong> — ML에서 데이터 품질이 모델 성능을 결정하듯, Eval 품질이 하네스 품질을 결정한다</p>
+    </div>
+    <aside class="notes">
+      마지막으로 Eval 플라이휠 이야기를 할게요. 유튜브 알고리즘 알죠? 볼수록 취향을 파악하고, 추천이 좋아지고, 더 보게 되는 선순환이에요. 하네스도 똑같아요. 에이전트를 많이 쓸수록 → 실행 기록(trace)이 쌓이고 → 거기서 실패 패턴을 찾아서 Eval 케이스를 만들고 → 그 Eval로 하네스를 개선하고 → 더 잘 작동하면 더 많이 쓰게 되는 선순환이 생겨요. LangChain에서는 이걸 "Hill Climbing"이라고 불러요. 산 꼭대기를 향해 올라가는 것처럼, Eval 점수를 올리는 방향으로 하네스를 반복해서 개선하는 거예요. 핵심 인사이트는 "Eval은 하네스의 학습 데이터다" — ML에서 데이터 품질이 모델을 결정하듯, 어떤 Eval을 갖고 있느냐가 하네스 품질을 결정해요.
+    </aside>
+  </section>
+</section>
+
+<!-- ════════════════════════════════════════════
+     10. 마무리
+     ════════════════════════════════════════════ -->
+<section style="text-align:center;">
+  <span class="cover-tag">TAKEAWAY</span>
+  <h1 style="font-size:1.8em; line-height:1.3;">우리는 이미<br><span style="color:var(--accent);">하네스를 쓰고 있었다</span></h1>
+  <div class="cover-rule"></div>
+  <p style="color:var(--muted); font-size:.78em; max-width:500px; margin:0 auto .8em;">이름만 몰랐을 뿐 — Agent = Model + <strong style="color:var(--accent);">Harness</strong></p>
+
+  <div class="cols cols-3" style="width:600px; margin:.8em auto 0; gap:10px;">
+    <div class="card" style="text-align:center;">
+      <h4 style="font-size:.72em;">Step 1</h4>
+      <p style="font-size:.82em; margin:.1em 0;"><strong>인식</strong></p>
+      <p style="font-size:.65em; color:var(--muted);">이미 가진 것을 파악<br>(6레이어 이미 있다)</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <h4 style="font-size:.72em;">Step 2</h4>
+      <p style="font-size:.82em; margin:.1em 0;"><strong>연결</strong></p>
+      <p style="font-size:.65em; color:var(--muted);">오케스트레이터로 묶기<br>(주방장 고용)</p>
+    </div>
+    <div class="card" style="text-align:center; border-color:rgba(0,179,125,.3);">
+      <h4 style="font-size:.72em;">Step 3</h4>
+      <p style="font-size:.82em; margin:.1em 0; color:var(--accent);"><strong>Eval 플라이휠</strong></p>
+      <p style="font-size:.65em; color:var(--muted);">쓸수록 좋아지는<br>선순환 만들기</p>
+    </div>
+  </div>
+
+  <div style="font-size:.65em; color:var(--muted); margin-top:1.2em; line-height:1.8;">
+    <code>Block</code> &middot; <code>Suggest</code> &middot; <code>Loop</code> &middot; <code>Evaluate</code> &middot; <code>Context</code>
+    &nbsp;+&nbsp; <code>Reasoning Sandwich</code> &middot; <code>Eval Flywheel</code>
+  </div>
+  <p style="color:var(--muted); font-size:.65em; margin-top:1.2em;">Q&A</p>
+  <aside class="notes">
+    정리하면요 — 우리는 이미 하네스를 쓰고 있었어요. 이름만 몰랐을 뿐이에요. CLAUDE.md에 규칙 넣고, Hook으로 자동화하고, Skills로 패턴 주입하고, Memory로 기억하고, MCP로 연결하고, Subagents로 역할 나눠서 일하고 있었잖아요.
+    앞으로 해야 할 건 세 단계예요 — 첫째, 이미 가진 것 인식하기. "아, 이게 Context 패턴이었구나". 둘째, 오케스트레이터로 연결하기. 주방장을 고용해서 50개의 재료를 자동으로 엮어주는 거예요. 셋째, Eval 플라이휠을 돌리기. 쓸수록 좋아지는 선순환을 만드는 거예요.
+    처음부터 완벽한 하네스를 설계하려 하지 마세요 — Claude Code와 함께 조금씩 튜닝하면 돼요. 오늘 이야기 중에 "우리 이미 하고 있었네?" 라는 부분이 하나라도 있었다면 성공이에요. 감사합니다!
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+Reveal.initialize({
+  width: 960,
+  height: 540,
+  margin: 0.04,
+  center: false,
+  transition: 'fade',
+  hash: true,
+  slideNumber: true,
+  showNotes: false,
+  plugins: [ RevealHighlight, RevealNotes ]
+});
+</script>
+</body>
+</html>
