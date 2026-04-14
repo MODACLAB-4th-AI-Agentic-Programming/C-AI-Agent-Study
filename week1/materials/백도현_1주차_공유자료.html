@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 에이전트의 이해</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --text: #e4e4e7;
+    --muted: #71717a;
+    --accent: #818cf8;
+    --accent2: #c084fc;
+    --accent3: #34d399;
+    --accent4: #fbbf24;
+    --accent5: #f87171;
+    --gradient: linear-gradient(135deg, #818cf8, #c084fc);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(129,140,248,0.15), transparent 70%);
+    top: 10%; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.5rem;
+    line-height: 1.15;
+  }
+
+  .hero p {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 1rem;
+  }
+
+  .hero-tags {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  .hero-tag {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    animation: bounce 2s infinite;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* Sections */
+  section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+
+  .section-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  section h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  section h2 + .subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    font-weight: 400;
+  }
+
+  section p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Diagram */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .flow-node {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .flow-node.user { background: rgba(129,140,248,0.15); color: var(--accent); border: 1px solid rgba(129,140,248,0.3); }
+  .flow-node.harness { background: rgba(192,132,252,0.15); color: var(--accent2); border: 1px solid rgba(192,132,252,0.3); }
+  .flow-node.model { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+  .flow-node.tool { background: rgba(251,191,36,0.15); color: var(--accent4); border: 1px solid rgba(251,191,36,0.3); }
+  .flow-node.red { background: rgba(248,113,113,0.15); color: var(--accent5); border: 1px solid rgba(248,113,113,0.3); }
+
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 1.2rem;
+  }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .card-grid.cols-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .card p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 0;
+  }
+
+  /* Comparison table */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+  }
+
+  .compare-table th {
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .compare-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* Highlight box */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(192,132,252,0.08));
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 14px;
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+
+  .highlight-box h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+
+  .highlight-box ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .highlight-box li {
+    padding: 0.4rem 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .highlight-box li::before {
+    content: '>';
+    color: var(--accent);
+    margin-right: 0.75rem;
+    font-weight: 700;
+  }
+
+  /* Analogy bar */
+  .analogy {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.75rem;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .analogy-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  /* Agent loop diagram */
+  .loop-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+
+  .loop-step {
+    text-align: center;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    min-width: 140px;
+  }
+
+  .loop-step .step-num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+  }
+
+  .loop-step .step-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .loop-step .step-desc {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  .loop-step.perceive { background: rgba(129,140,248,0.15); color: var(--accent); border: 1px solid rgba(129,140,248,0.3); }
+  .loop-step.reason { background: rgba(192,132,252,0.15); color: var(--accent2); border: 1px solid rgba(192,132,252,0.3); }
+  .loop-step.act { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+
+  .loop-arrow {
+    font-size: 1.5rem;
+    color: var(--muted);
+  }
+
+  .loop-back {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* Hook flow */
+  .hook-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+
+  .hook-step {
+    text-align: center;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    min-width: 130px;
+  }
+
+  .hook-step h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--accent4);
+  }
+
+  .hook-step p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin: 2rem 0;
+  }
+
+  .arch-label {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent2);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arch-agents {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .arch-agent {
+    text-align: center;
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .arch-agent h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .arch-agent .skill-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin: 2px;
+    background: rgba(52,211,153,0.1);
+    color: var(--accent3);
+    border: 1px solid rgba(52,211,153,0.2);
+  }
+
+  .arch-hooks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border);
+  }
+
+  .arch-hook {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+  }
+
+  .arch-hook h5 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent4);
+    margin-bottom: 0.25rem;
+  }
+
+  .arch-hook p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .arch-connector {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* Multi-agent diagram */
+  .multi-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+
+  .agent-box {
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 130px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .agent-box.a1 { background: rgba(129,140,248,0.15); color: var(--accent); border: 1px solid rgba(129,140,248,0.3); }
+  .agent-box.a2 { background: rgba(192,132,252,0.15); color: var(--accent2); border: 1px solid rgba(192,132,252,0.3); }
+  .agent-box.a3 { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+
+  .bidir-arrow {
+    font-size: 1.3rem;
+    color: var(--muted);
+  }
+
+  /* Sub-agent tree */
+  .sub-tree {
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .sub-main {
+    display: inline-block;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    background: rgba(192,132,252,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(192,132,252,0.3);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sub-main-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .sub-arrows {
+    display: flex;
+    justify-content: center;
+    gap: 6rem;
+    color: var(--muted);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sub-children {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .sub-child {
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .sub-child h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+  }
+
+  .sub-child p {
+    font-size: 0.75rem;
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  .sub-child.c1 { background: rgba(129,140,248,0.12); color: var(--accent); border: 1px solid rgba(129,140,248,0.25); }
+  .sub-child.c2 { background: rgba(52,211,153,0.12); color: var(--accent3); border: 1px solid rgba(52,211,153,0.25); }
+  .sub-child.c3 { background: rgba(251,191,36,0.12); color: var(--accent4); border: 1px solid rgba(251,191,36,0.25); }
+
+  .sub-report {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* Summary grid */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .summary-item {
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .summary-item h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--text);
+  }
+
+  .summary-item p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* Fade-in animation */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .arch-agents, .arch-hooks { grid-template-columns: 1fr; }
+    .sub-arrows { gap: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<div class="hero">
+  <span class="hero-badge">AI Engineering 2026</span>
+  <h1>AI 에이전트의 이해</h1>
+  <p>스킬, 훅, 멀티 에이전트, 서브 에이전트,<br>그리고 하네스 엔지니어링까지.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">Skill</span>
+    <span class="hero-tag">Hook</span>
+    <span class="hero-tag">Multi-Agent</span>
+    <span class="hero-tag">Sub-Agent</span>
+    <span class="hero-tag">Harness Engineering</span>
+  </div>
+  <div class="scroll-hint">scroll down</div>
+</div>
+
+<!-- ===== 01. AI 에이전트란? ===== -->
+<section class="fade-in">
+  <div class="section-label">01 / AI Agent</div>
+  <h2>AI 에이전트란?</h2>
+  <div class="subtitle">Agent = 자율적으로 행동하는 주체</div>
+  <p>
+    AI 에이전트는 환경을 <strong>인식(Perceive)</strong>하고, 스스로 <strong>판단(Reason)</strong>하며,
+    목표 달성을 위해 자율적으로 <strong>행동(Act)</strong>하는 AI 시스템입니다.
+  </p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">&#9889;</div>
+      <h3>자율성</h3>
+      <p>사람의 개입 없이 스스로 판단하고 행동</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#127919;</div>
+      <h3>목표 지향</h3>
+      <p>주어진 목표를 향해 단계적으로 작업 수행</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128065;</div>
+      <h3>환경 인식</h3>
+      <p>주변 상태를 파악하고 변화에 실시간 적응</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128295;</div>
+      <h3>도구 활용</h3>
+      <p>외부 도구와 API를 필요에 따라 호출</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span>전통 AI = <strong>계산기</strong> (시킨 대로만) &nbsp;&rarr;&nbsp; AI 에이전트 = <strong>비서</strong> (스스로 판단해서 처리)</span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 02. 작동 원리 ===== -->
+<section class="fade-in">
+  <div class="section-label">02 / How It Works</div>
+  <h2>AI 에이전트의 작동 원리</h2>
+  <div class="subtitle">인식 &rarr; 판단 &rarr; 행동 반복 루프</div>
+
+  <div class="loop-diagram">
+    <div class="loop-step perceive">
+      <div class="step-num">STEP 1</div>
+      <div class="step-title">인식 (Perceive)</div>
+      <div class="step-desc">환경에서 데이터를<br>수집하고 상태를 파악</div>
+    </div>
+    <span class="loop-arrow">&rarr;</span>
+    <div class="loop-step reason">
+      <div class="step-num">STEP 2</div>
+      <div class="step-title">판단 (Reason)</div>
+      <div class="step-desc">수집된 정보를 분석하고<br>다음 행동을 결정</div>
+    </div>
+    <span class="loop-arrow">&rarr;</span>
+    <div class="loop-step act">
+      <div class="step-num">STEP 3</div>
+      <div class="step-title">행동 (Act)</div>
+      <div class="step-desc">도구를 사용하거나<br>결과를 출력</div>
+    </div>
+  </div>
+  <div class="loop-back">&larr;&mdash;&mdash;&mdash;&mdash;&mdash; 반복 (Loop) &mdash;&mdash;&mdash;&mdash;&mdash;&rarr;</div>
+
+  <p style="margin-top: 2rem;">
+    이 루프가 반복될수록 에이전트는 이전 결과를 기반으로 더 정확한 판단을 내립니다.
+    단순 명령 실행이 아닌, <strong>'경험'을 통해 점진적으로 목표에 도달</strong>하는 것이 핵심입니다.
+  </p>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 03. 스킬 ===== -->
+<section class="fade-in">
+  <div class="section-label">03 / Skill</div>
+  <h2>스킬(Skill)이란?</h2>
+  <div class="subtitle">에이전트에 부여된 모듈화된 능력 단위</div>
+  <p>
+    스킬은 에이전트가 수행할 수 있는 <strong>특정 기능 단위</strong>입니다.
+    플러그인처럼 필요에 따라 추가/제거 가능한 모듈화된 기능입니다.
+  </p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">&#128187;</div>
+      <h3>코드 작성</h3>
+      <p>프로그래밍 언어로 코드 생성/수정</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128270;</div>
+      <h3>웹 검색</h3>
+      <p>인터넷에서 정보를 탐색/수집</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128202;</div>
+      <h3>데이터 분석</h3>
+      <p>CSV/DB 등 데이터 처리/시각화</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128193;</div>
+      <h3>파일 관리</h3>
+      <p>파일 읽기/쓰기/수정/삭제</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128027;</div>
+      <h3>디버깅</h3>
+      <p>버그를 추적하고 원인 분석/수정</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top: 2rem;">
+    <h3>핵심 특징</h3>
+    <ul>
+      <li><strong>모듈화</strong> &mdash; 독립적으로 추가/제거 가능</li>
+      <li><strong>재사용</strong> &mdash; 여러 에이전트가 같은 스킬 공유</li>
+      <li><strong>전문화</strong> &mdash; 각 스킬은 하나의 역할에 집중</li>
+      <li><strong>조합</strong> &mdash; 여러 스킬 조합으로 복잡한 작업 수행</li>
+    </ul>
+  </div>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span>사람의 <strong>'기술'</strong> (요리, 운전 등) &mdash; 필요한 기술을 배워 능력을 확장하는 것과 동일</span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 04. 훅 ===== -->
+<section class="fade-in">
+  <div class="section-label">04 / Hook</div>
+  <h2>훅(Hook)이란?</h2>
+  <div class="subtitle">특정 이벤트 발생 시 자동 실행되는 트리거</div>
+  <p>
+    훅은 <strong>"~할 때 자동으로 ~해라"</strong>는 규칙을 정의하는 이벤트 기반 자동화입니다.
+    에이전트가 직접 호출하는 게 아니라, 조건 충족 시 자동으로 실행됩니다.
+  </p>
+
+  <div class="hook-flow">
+    <div class="hook-step">
+      <h4>이벤트 발생</h4>
+      <p>파일 저장, 커밋,<br>도구 호출, 배포 등</p>
+    </div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="hook-step">
+      <h4>훅 트리거</h4>
+      <p>조건 확인 후<br>자동 실행 판단</p>
+    </div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="hook-step">
+      <h4>액션 수행</h4>
+      <p>검증, 포맷팅,<br>알림, 차단 등</p>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">&#128274;</div>
+      <h3>Pre-commit Hook</h3>
+      <p>커밋 전 코드 린트 자동 실행. 규칙 위반 시 커밋 차단.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128190;</div>
+      <h3>Pre-save Hook</h3>
+      <p>파일 저장 전 자동 포맷팅. prettier, black 등 실행.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">&#128227;</div>
+      <h3>Post-deploy Hook</h3>
+      <p>배포 완료 후 자동 알림. Slack, 이메일 전송.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span><strong>알람 시계</strong> &mdash; 설정한 시간이 되면 무조건 울리는 자동 장치</span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 05. 스킬 vs 훅 비교 ===== -->
+<section class="fade-in">
+  <div class="section-label">05 / Skill vs Hook</div>
+  <h2>스킬 vs 훅 비교</h2>
+
+  <table class="compare-table">
+    <tr>
+      <th>구분</th>
+      <th>스킬 (Skill)</th>
+      <th>훅 (Hook)</th>
+    </tr>
+    <tr>
+      <td>실행 방식</td>
+      <td>에이전트가 <strong>직접 호출</strong></td>
+      <td>이벤트 발생 시 <strong>자동 실행</strong></td>
+    </tr>
+    <tr>
+      <td>주체</td>
+      <td>에이전트 (능동적)</td>
+      <td>시스템 (수동적 트리거)</td>
+    </tr>
+    <tr>
+      <td>목적</td>
+      <td>작업 수행 능력 확장</td>
+      <td>품질 보장, 자동화, 안전장치</td>
+    </tr>
+    <tr>
+      <td>비유</td>
+      <td>사람의 기술 (요리, 운전)</td>
+      <td>알람 시계 (자동 트리거)</td>
+    </tr>
+    <tr>
+      <td>예시</td>
+      <td>코드 작성, 웹 검색, 분석</td>
+      <td>커밋 전 린트, 저장 시 포맷팅</td>
+    </tr>
+  </table>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span>스킬 = <strong>"할 수 있는 것"</strong> &nbsp;|&nbsp; 훅 = <strong>"자동으로 일어나는 것"</strong></span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 06. 멀티 에이전트 ===== -->
+<section class="fade-in">
+  <div class="section-label">06 / Multi-Agent</div>
+  <h2>멀티 에이전트 시스템</h2>
+  <div class="subtitle">독립적인 에이전트들이 수평적으로 협력</div>
+  <p>
+    멀티 에이전트 시스템(MAS)은 독립적인 여러 에이전트가 <strong>동등한 위치</strong>에서
+    서로 협력/소통하며 복잡한 작업을 분담하여 해결하는 구조입니다.
+  </p>
+
+  <div class="multi-diagram">
+    <div class="agent-box a1">코드 작성<br>에이전트</div>
+    <span class="bidir-arrow">&harr;</span>
+    <div class="agent-box a2">리뷰<br>에이전트</div>
+    <span class="bidir-arrow">&harr;</span>
+    <div class="agent-box a3">테스트<br>에이전트</div>
+  </div>
+
+  <p style="text-align:center; font-size:0.9rem; color:var(--accent); margin-top:-0.5rem;">
+    수평적 / 동등한 관계 (Peer-to-Peer)
+  </p>
+
+  <div class="highlight-box">
+    <h3>특징</h3>
+    <ul>
+      <li>각 에이전트가 <strong>독립적으로</strong> 판단하고 자율적으로 행동</li>
+      <li><strong>병렬 처리</strong> 가능 &mdash; 여러 작업을 동시에 수행</li>
+      <li><strong>역할 분담</strong> &mdash; 전문 영역별 담당 (코딩, 리뷰, 테스트 등)</li>
+    </ul>
+  </div>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span><strong>회사 팀 회의</strong> &mdash; 각 팀원이 전문성으로 동등하게 의견을 나누는 구조</span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 07. 서브 에이전트 ===== -->
+<section class="fade-in">
+  <div class="section-label">07 / Sub-Agent</div>
+  <h2>서브 에이전트</h2>
+  <div class="subtitle">메인 에이전트의 지시를 받아 하위 작업 수행</div>
+  <p>
+    서브 에이전트는 상위(메인) 에이전트로부터 <strong>하위 작업을 위임</strong>받아 수행하고,
+    결과를 다시 상위에게 보고하는 <strong>계층적(Parent &rarr; Child)</strong> 구조입니다.
+  </p>
+
+  <div class="sub-tree">
+    <div class="sub-main">메인 에이전트 (오케스트레이터)</div>
+    <div class="sub-main-desc">작업 분해 &rarr; 위임 &rarr; 결과 통합</div>
+    <div class="sub-arrows">
+      <span>&darr; 지시</span>
+      <span>&darr; 지시</span>
+      <span>&darr; 지시</span>
+    </div>
+    <div class="sub-children">
+      <div class="sub-child c1">
+        <h4>검색 서브에이전트</h4>
+        <p>&uarr; 결과 보고</p>
+      </div>
+      <div class="sub-child c2">
+        <h4>분석 서브에이전트</h4>
+        <p>&uarr; 결과 보고</p>
+      </div>
+      <div class="sub-child c3">
+        <h4>작성 서브에이전트</h4>
+        <p>&uarr; 결과 보고</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span><strong>팀장-팀원 관계</strong> &mdash; 팀장이 업무 분배, 팀원이 수행 후 결과 보고</span>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 08. 멀티 vs 서브 비교 ===== -->
+<section class="fade-in">
+  <div class="section-label">08 / Multi vs Sub</div>
+  <h2>멀티 에이전트 vs 서브 에이전트</h2>
+  <div class="subtitle">핵심 차이점 비교</div>
+
+  <table class="compare-table">
+    <tr>
+      <th>구분</th>
+      <th>멀티 에이전트</th>
+      <th>서브 에이전트</th>
+    </tr>
+    <tr>
+      <td>구조</td>
+      <td><strong>수평적</strong> (Peer-to-Peer)</td>
+      <td><strong>수직적</strong> (Parent-Child)</td>
+    </tr>
+    <tr>
+      <td>관계</td>
+      <td>동등한 협력</td>
+      <td>상하 위임</td>
+    </tr>
+    <tr>
+      <td>의사결정</td>
+      <td>각 에이전트가 독립 판단</td>
+      <td>메인 에이전트가 총괄</td>
+    </tr>
+    <tr>
+      <td>통신</td>
+      <td>에이전트 간 직접 소통</td>
+      <td>메인을 통한 간접 소통</td>
+    </tr>
+    <tr>
+      <td>비유</td>
+      <td>팀 회의</td>
+      <td>팀장-팀원</td>
+    </tr>
+  </table>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 09. 하네스 엔지니어링 ===== -->
+<section class="fade-in">
+  <div class="section-label">09 / Harness Engineering</div>
+  <h2>하네스 엔지니어링이란?</h2>
+  <div class="subtitle">에이전트 시스템의 구성 요소를 설계하고 조율하는 기술</div>
+  <p>
+    하네스 엔지니어링은 에이전트, 스킬, 훅을 <strong>하나의 체계로 연결하고 조율</strong>하는 설계 기술입니다.
+    어떤 에이전트에게 어떤 스킬을 부여하고, 어떤 훅으로 자동화할지 전체 구조를 설계합니다.
+  </p>
+
+  <div class="analogy">
+    <span class="analogy-icon">&#128161;</span>
+    <span>마차의 <strong>고삐(harness)</strong>가 여러 말을 하나의 방향으로 이끌듯, 하네스가 에이전트/스킬/훅을 하나의 목표로 조율합니다.</span>
+  </div>
+
+  <!-- 5 Steps -->
+  <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">&#9312;</div>
+      <h3>에이전트 정의</h3>
+      <p>역할/능력/권한을 설계하고 배치</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">&#9313;</div>
+      <h3>스킬 할당</h3>
+      <p>에이전트별 필요한 스킬을 배분</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">&#9314;</div>
+      <h3>훅 설정</h3>
+      <p>이벤트 트리거 규칙을 정의</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">&#9315;</div>
+      <h3>통신 규칙</h3>
+      <p>에이전트 간 소통 방식을 설계</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-icon">&#9316;</div>
+      <h3>실행 정책</h3>
+      <p>병렬/순차 전략, 권한과 제한 설정</p>
+    </div>
+  </div>
+
+  <!-- Architecture Diagram -->
+  <div class="arch-diagram" style="margin-top: 2.5rem;">
+    <div class="arch-label">HARNESS (하네스) &mdash; 전체 구조도</div>
+
+    <div class="arch-agents">
+      <div class="arch-agent">
+        <h4 style="color:var(--accent);">코드 에이전트</h4>
+        <span class="skill-tag">코드 작성</span>
+        <span class="skill-tag">디버깅</span>
+      </div>
+      <div class="arch-agent">
+        <h4 style="color:var(--accent2);">리서치 에이전트</h4>
+        <span class="skill-tag">웹 검색</span>
+        <span class="skill-tag">문서 분석</span>
+      </div>
+      <div class="arch-agent">
+        <h4 style="color:var(--accent3);">QA 에이전트</h4>
+        <span class="skill-tag">테스트</span>
+        <span class="skill-tag">검증</span>
+      </div>
+    </div>
+
+    <div class="arch-connector">&uarr; 스킬(Skill) 할당 &nbsp;&nbsp;&nbsp;&nbsp; &harr; 에이전트 간 통신 &nbsp;&nbsp;&nbsp;&nbsp; &darr; 훅(Hook) 연결</div>
+
+    <div class="arch-hooks">
+      <div class="arch-hook">
+        <h5>Pre-commit</h5>
+        <p>코드 검증</p>
+      </div>
+      <div class="arch-hook">
+        <h5>Post-test</h5>
+        <p>결과 알림</p>
+      </div>
+      <div class="arch-hook">
+        <h5>Pre-deploy</h5>
+        <p>최종 승인</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== 10. 정리 ===== -->
+<section class="fade-in">
+  <div class="section-label">10 / Summary</div>
+  <h2>정리</h2>
+
+  <div class="summary-grid">
+    <div class="summary-item">
+      <h3>AI 에이전트</h3>
+      <p>환경을 인식하고 자율적으로 판단/행동하는 AI 시스템</p>
+    </div>
+    <div class="summary-item">
+      <h3>스킬 (Skill)</h3>
+      <p>에이전트에 부여된 모듈화된 능력 단위 (플러그인)</p>
+    </div>
+    <div class="summary-item">
+      <h3>훅 (Hook)</h3>
+      <p>이벤트 발생 시 자동 실행되는 트리거 (안전장치)</p>
+    </div>
+    <div class="summary-item">
+      <h3>멀티 에이전트</h3>
+      <p>동등한 에이전트들이 수평적으로 협력하는 시스템</p>
+    </div>
+    <div class="summary-item">
+      <h3>서브 에이전트</h3>
+      <p>메인 아래에서 하위 작업을 위임받는 계층 구조</p>
+    </div>
+    <div class="summary-item">
+      <h3>하네스 엔지니어링</h3>
+      <p>에이전트/스킬/훅을 하나의 체계로 설계/조율하는 기술</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>AI 에이전트의 이해 &mdash; 2026</p>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
