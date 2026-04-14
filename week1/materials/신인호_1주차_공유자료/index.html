@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 코딩 워크플로우 소개: Harness, Gstack, BMAD-Method</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/github.css" />
+  <style>
+    :root {
+      --bg:      linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      --surface: #ffffff;
+      --border:  #e2e8f0;
+      --accent:  #6366f1; /* Indigo */
+      --secondary: #8b5cf6; /* Violet */
+      --blue:    #0ea5e9; /* Sky Blue */
+      --warn:    #f59e0b;
+      --danger:  #f43f5e;
+      --muted:   #94a3b8;
+      --text:    #334155;
+      --heading: #0f172a;
+    }
+    .reveal-viewport { background: var(--bg); }
+    .reveal { background: transparent; font-family: 'Inter', 'Pretendard', sans-serif; color: var(--text); }
+
+    .reveal h1 { font-size: 2.2em; font-weight: 900; color: var(--heading); letter-spacing: -0.04em; margin-bottom: .4em; text-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
+    .reveal h2 {
+      font-size: 1.4em; font-weight: 800; color: var(--accent);
+      letter-spacing: -0.02em; border-left: 6px solid var(--accent);
+      padding-left: 15px; margin-bottom: .8em; text-transform: none;
+    }
+    .reveal h3 { font-size: 1.05em; font-weight: 700; color: var(--heading); margin: 0 0 .5em; }
+    .reveal p  { font-size: .9em; line-height: 1.7; color: var(--text); }
+    .reveal li { margin-left: 16px; font-size: .85em; line-height: 1.7; color: var(--text); margin-bottom: 0.4em; }
+    .reveal strong { font-weight: 800; color: var(--heading); border-bottom: 2px solid rgba(99, 102, 241, 0.2); }
+
+    .reveal .slides > section:not(:has(> section)),
+    .reveal .slides > section > section {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+      padding: 40px 60px !important;
+      box-sizing: border-box;
+      height: 100% !important;
+      top: 0 !important;
+    }
+
+    .reveal code {
+      background: #f8fafc; border: 1px solid var(--border); color: var(--accent);
+      padding: 3px 8px; border-radius: 6px; font-size: .82em;
+      font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 1.2em; margin-bottom: 0.6em;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .card h4 { font-size: .85em; font-weight: 800; color: var(--secondary); margin: 0 0 .5em; display: flex; align-items: center; gap: 8px; }
+    .card p, .card li { font-size: .82em; line-height: 1.6; }
+
+    .cols { display: grid; gap: 24px; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .hl {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%);
+      border-left: 5px solid var(--accent); padding: 1.2em 1.5em; border-radius: 0 12px 12px 0; margin-top: 1em;
+    }
+    .hl p { font-size: .85em; margin: 0; font-weight: 600; color: var(--heading); }
+
+    .table-custom { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.75em; margin-top: 1em; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .table-custom th { background: #f8fafc; text-align: left; padding: 15px; border-bottom: 2px solid var(--border); color: var(--heading); font-weight: 800; }
+    .table-custom td { padding: 14px; border-bottom: 1px solid var(--border); background: white; }
+    .table-custom tr:last-child td { border-bottom: none; }
+
+    .quote { font-style: normal; color: var(--text); border-left: 4px solid var(--secondary); padding-left: 1.2em; margin: 1em 0; font-size: 0.95em; line-height: 1.6; background: rgba(139, 92, 246, 0.03); padding-top: 0.8em; padding-bottom: 0.8em; border-radius: 0 8px 8px 0; }
+
+    .reveal .progress { height: 6px; background: rgba(0,0,0,0.05); }
+    .reveal .progress span { background: linear-gradient(90deg, var(--accent), var(--secondary)); }
+
+    .intro-box {
+      border: 3px solid var(--accent); border-radius: 24px; padding: 2.5em; text-align: center;
+      background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      position: relative; overflow: hidden;
+    }
+    .intro-box::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+      background: linear-gradient(90deg, var(--accent), var(--secondary));
+    }
+
+    .pattern-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+    .pattern-item {
+      text-align: center; padding: 12px; background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .pattern-item:hover { background: white; border-color: var(--accent); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
+    .pattern-icon { font-size: 1.4em; display: block; margin-bottom: 6px; }
+    .pattern-label { font-size: 0.7em; font-weight: 800; display: block; color: var(--heading); }
+    .badge-container {
+      position: absolute;
+      top: 40px;
+      right: 60px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- Slide 1: Cover -->
+  <section style="text-align:center;">
+    <div class="intro-box">
+      <p style="text-transform:uppercase; letter-spacing:0.1em; font-size:0.7em; font-weight:700; color:var(--accent); margin-bottom:1em;">AI Agent Study Week 1</p>
+      <h1 style="font-size:2em; line-height:1.2;">AI 코딩 워크플로우 소개<br><span style="color:var(--blue); font-size:0.8em;">Harness, Gstack, BMAD-Method</span></h1>
+      <div style="width:60px; height:4px; background:var(--accent); margin:1.5em auto;"></div>
+      <p class="intro-subtitle">단순한 프롬프팅을 넘어 실제 프로덕션 소프트웨어를 위한 최신 워크플로우</p>
+    </div>
+    <p style="margin-top:2em; font-size:0.8em; color:var(--muted);">발표자: 신인호</p>
+  </section>
+
+  <!-- Slide 2: Why do we need new methods? -->
+  <section>
+    <h2>1. 왜 새로운 방법론이 필요한가?</h2>
+    <p>데모 수준의 '바이브 코딩(Vibe Coding)'에서 <strong style="color:var(--accent);">프로덕션 레벨</strong>로 넘어가기 위한 도전</p>
+
+    <div class="cols cols-3" style="margin-top:1em;">
+      <div class="card">
+        <h4>🧩 컨텍스트 한계</h4>
+        <p>프로젝트가 커지면 AI가 이전 코드를 잊거나 일관성을 잃는 <strong>Context Anxiety</strong> 발생</p>
+      </div>
+      <div class="card">
+        <h4>⚖️ 자기 평가 한계</h4>
+        <p>AI는 자신의 실수를 발견하기 어렵고, 오류가 있어도 "완벽하다"고 과대평가하는 경향</p>
+      </div>
+      <div class="card">
+        <h4>🗝️ 암묵지 전달 한계</h4>
+        <p>팀 내부의 아키텍처 패턴이나 라이브러리 규칙 등 명시되지 않은 정보를 AI는 알 수 없음</p>
+      </div>
+    </div>
+
+    <div class="hl">
+      <p>"AI 모델 자체의 지능보다 <strong>AI가 일하는 환경을 어떻게 통제(엔지니어링)할 것인가</strong>가 핵심입니다."</p>
+    </div>
+  </section>
+
+  <!-- Slide 3: Harness Engineering -->
+  <section>
+    <h2>2. 하네스 엔지니어링 (Harness Engineering)</h2>
+    <div class="quote">"AI가 실수하지 않도록 환경(안전벨트)을 설계하라"</div>
+
+    <div class="cols cols-2" style="margin-top:1em;">
+      <div class="card">
+        <h4>핵심 개념</h4>
+        <ul>
+          <li>프롬프트를 넘어 역할과 파이프라인을 구조적으로 강제</li>
+          <li>AI가 딴짓을 못 하도록 '안전망' 구축</li>
+          <li>미첼 하시모토(하시코프 창립자) 제안</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Maker vs Checker (분리)</h4>
+        <p><strong>Planner:</strong> 스펙 정의</p>
+        <p><strong>Generator:</strong> 코드 구현</p>
+        <p><strong>Evaluator:</strong> 실제 환경 검증</p>
+      </div>
+    </div>
+
+    <p style="font-size:0.85em; margin-top:1em; color:var(--muted);">모델이 똑똑해지더라도, 모델의 빈틈을 메워주는 <strong>환경 설계</strong>는 계속 필요합니다.</p>
+  </section>
+
+  <!-- Slide 4: Gstack -->
+  <section>
+    <div class="badge-container">
+      <a href="https://star-history.com/#garrytan/gstack&Date">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=garrytan/gstack&theme=dark" />
+          <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=garrytan/gstack" />
+          <img alt="Star History Badge" src="https://api.star-history.com/badge?repo=garrytan/gstack" style="height: 24px;">
+        </picture>
+      </a>
+      <a href="https://github.com/garrytan/gstack" target="_blank">
+        <img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" style="height: 24px; border-radius: 4px;">
+      </a>
+    </div>
+    <h2>3. Gstack: 실행력 중심 스타트업 워크플로우</h2>
+    <div class="quote">"거창한 설계보다 빠른 MVP 런칭과 배포(Ship it!)"</div>
+
+    <div class="cols cols-2" style="margin-top:1em;">
+      <div class="card">
+        <h4>접근 방식</h4>
+        <p>클로드 코드를 범용 챗봇이 아닌, <strong>23개의 특정 전문가 역할</strong>로 강제 분리</p>
+        <ul style="margin-top:0.5em;">
+          <li><code>skill.md</code>를 활용한 역할 정의</li>
+          <li>Y Combinator CEO 게리 탄의 세팅</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>주요 명령어 (Slash Commands)</h4>
+        <p><code>/plan-ceo-review</code>: 제품 방향성 검증</p>
+        <p><code>/review</code>: 시니어 엔지니어 관점 검토</p>
+        <p><code>/qa</code>: 브라우저 클릭 테스트</p>
+        <p><code>/ship</code>: 테스트 및 PR 생성 한 번에</p>
+      </div>
+    </div>
+
+
+    <div class="hl">
+      <p>💡 인사이트: 극도로 빠른 실행력, 소규모 팀, 단기 스프린트에 최적화</p>
+    </div>
+  </section>
+
+  <!-- Slide 5: BMAD Method -->
+  <section>
+    <div class="badge-container">
+      <a href="https://star-history.com/#bmad-code-org/BMAD-METHOD&Date">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=bmad-code-org/BMAD-METHOD&theme=dark" />
+          <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=bmad-code-org/BMAD-METHOD" />
+          <img alt="Star History Badge" src="https://api.star-history.com/badge?repo=bmad-code-org/BMAD-METHOD" style="height: 24px;">
+        </picture>
+      </a>
+      <a href="https://github.com/bmad-code-org/BMAD-METHOD" target="_blank">
+        <img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" style="height: 24px; border-radius: 4px;">
+      </a>
+    </div>
+    <h2>4. BMAD Method: 정통 애자일의 AI화</h2>
+    <div class="quote">"코드 한 줄을 짜기 전에 완벽한 청사진(PRD/아키텍처)부터 만들자"</div>
+
+    <h3 style="margin-top:0.5em;">전담 에이전트 파이프라인</h3>
+    <div style="font-size:0.75em; display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:1em; border-radius:8px; border:1px solid var(--border);">
+      <div style="text-align:center;"><strong>PRD/Arch</strong><br><br>초기 세팅</div>
+      <div style="color:var(--accent);">→</div>
+      <div style="text-align:center;"><strong>PO</strong><br><br>작업 샤딩</div>
+      <div style="color:var(--accent);">→</div>
+      <div style="text-align:center;"><strong>Scrum Master</strong><br><br>Epic/Story 생성</div>
+      <div style="color:var(--accent);">→</div>
+      <div style="text-align:center;"><strong>Dev</strong><br><br>모듈 구현</div>
+      <div style="color:var(--accent);">→</div>
+      <div style="text-align:center;"><strong>Review</strong><br><br>자동 승인</div>
+    </div>
+
+    <div class="cols cols-2" style="margin-top:1em;">
+      <div class="card">
+        <h4>엄격한 프로세스</h4>
+        <p><code>분석 ➔ 계획 ➔ 아키텍처 ➔ 구현 ➔ 테스트</code> 단계를 강제하여 컨텍스트 유지</p>
+      </div>
+      <div class="card">
+        <h4>문서 기반 관리</h4>
+        <p>PRD를 작은 스토리 단위로 쪼개고 각 에이전트가 이를 하나씩 완수</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 6: Comparison -->
+  <section>
+    <h2>5. Gstack vs BMAD-Method 요약</h2>
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>Gstack</th>
+          <th>BMAD Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>철학</strong></td>
+          <td>린 스타트업 (빠른 검증/배포)</td>
+          <td>정통 애자일 (체계적 계획/구현)</td>
+        </tr>
+        <tr>
+          <td><strong>주도권</strong></td>
+          <td>개발자가 명령어로 AI 호출</td>
+          <td>오케스트레이터가 흐름 리드</td>
+        </tr>
+        <tr>
+          <td><strong>템포</strong></td>
+          <td><strong>매우 빠름</strong> (문서 최소화)</td>
+          <td><strong>상대적 느림</strong> (초기 설계 집중)</td>
+        </tr>
+        <tr>
+          <td><strong>최적 환경</strong></td>
+          <td>소규모, MVP 런칭</td>
+          <td>중대형, 복잡한 로직, 유지보수</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hl">
+      <p>💡 결론: 우리 팀의 프로젝트 규모와 요구되는 안정성에 따라 선택하거나 혼합 운용</p>
+    </div>
+  </section>
+
+  <!-- Slide 7: Harness RevFactory -->
+  <section>
+    <section>
+      <div class="badge-container">
+        <a href="https://github.com/revfactory/harness" target="_blank">
+          <img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" style="height: 24px; border-radius: 4px;">
+        </a>
+      </div>
+      <h2>6. 커스텀 하네스 생성기 (RevFactory)</h2>
+      <p>프로젝트에 최적화된 <strong>에이전트 팀과 스킬</strong>을 생성해주는 메타-스킬</p>
+
+      <div class="cols cols-2" style="margin-top:1em;">
+        <div class="card">
+          <h4>자동 팀 설계</h4>
+          <p>도메인 분석 후 필요한 에이전트(.agents/)와 스킬(.skills/)을 자동 생성</p>
+        </div>
+        <div class="card">
+          <h4>6대 아키텍처 패턴</h4>
+          <div class="pattern-grid">
+            <div class="pattern-item"><span class="pattern-icon">🛤️</span><span class="pattern-label">파이프라인</span></div>
+            <div class="pattern-item"><span class="pattern-icon">🌿</span><span class="pattern-label">팬아웃/인</span></div>
+            <div class="pattern-item"><span class="pattern-icon">👨‍🏫</span><span class="pattern-label">전문가 풀</span></div>
+            <div class="pattern-item"><span class="pattern-icon">⚖️</span><span class="pattern-label">생성-검증</span></div>
+            <div class="pattern-item"><span class="pattern-icon">👮</span><span class="pattern-label">감독자</span></div>
+            <div class="pattern-item"><span class="pattern-icon">👑</span><span class="pattern-label">계층 위임</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hl">
+        <p>[추천] 프로덕션급 하네스 100개를 공개한 <a href="https://github.com/revfactory/harness-100" target="_blank">Harness 100</a> 레포지토리 참고</p>
+      </div>
+      <p style="text-align:center; font-size:0.6em; color:var(--muted); margin-top:0.5em;">아래로 내려서 사용법 확인 ↓</p>
+    </section>
+
+    <!-- Sub-slide: Quick Start -->
+    <section>
+      <h2>Harness Quick Start</h2>
+      <p style="font-size: 0.8em; color: var(--muted);">명령어 두 줄이면 몇 초 만에 시작할 수 있습니다.</p>
+
+      <div class="cols cols-2" style="margin-top:0.8em; gap: 15px;">
+        <div class="card" style="border-left: 4px solid var(--blue);">
+          <h4 style="color:var(--blue); font-size: 0.75em;">1. 마켓플레이스 추가</h4>
+          <code style="font-size: 0.7em;">/plugin marketplace add revfactory/harness</code>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--blue);">
+          <h4 style="color:var(--blue); font-size: 0.75em;">2. 플러그인 설치</h4>
+          <code style="font-size: 0.7em;">/plugin install harness@harness</code>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:0.8em; background: rgba(16, 185, 129, 0.03); border: 1px dashed var(--accent);">
+        <h4 style="font-size: 0.8em;">💡 추천 프롬프트 (Full-stack Web)</h4>
+        <p style="font-size: 0.75em; line-height: 1.5; color: var(--text); font-style: italic;">
+          "풀스택 웹사이트 개발 하네스를 구성해줘. 디자인, 프론트엔드(React/Next.js), 백엔드(API), QA 테스트를 와이어프레임부터 배포까지 파이프라인으로 조율하는 팀."
+        </p>
+      </div>
+
+      <div style="margin-top:1em; text-align:center;">
+        <a href="https://revfactory.github.io/harness/#ko" target="_blank" style="font-size: 0.75em; color: var(--blue); text-decoration: underline;">
+          🔗 Harness 공식 소개 페이지 (ko)
+        </a>
+      </div>
+    </section>
+  </section>
+
+  <!-- Slide 8: Closing -->
+  <section>
+    <h2>7. 마치며: 실용적인 AI 도입 팁</h2>
+    <p>어디서 막히는지에 따라 해결책을 선택하세요.</p>
+
+    <div class="cols cols-3">
+      <div class="card">
+        <h4>맥락을 잃는다면?</h4>
+        <p>BMAD처럼 작업을 작은 단위(Story)로 세분화</p>
+      </div>
+      <div class="card">
+        <h4>품질이 걱정된다면?</h4>
+        <p>Gstack처럼 /review, /qa로 만드는 자와 검증자 분리</p>
+      </div>
+      <div class="card">
+        <h4>워크플로우 커스텀?</h4>
+        <p>RevFactory로 프로젝트 맞춤형 에이전트 구성</p>
+      </div>
+    </div>
+
+    <div class="hl" style="margin-top:1.5em; text-align:center; border-left:none; border-bottom:4px solid var(--accent);">
+      <p style="font-size:1em;">"FOMO를 느끼기보다, <strong>지금 불편한 지점 하나</strong>를 해결할 도구부터 시도해보세요." 😊</p>
+    </div>
+  </section>
+
+  <!-- Slide 9: Reference Links -->
+  <section>
+    <h2>참고 링크</h2>
+    <div class="cols cols-2">
+      <div class="card">
+        <h4>GitHub Repositories</h4>
+        <ul style="font-size:0.7em;">
+          <li><a href="https://github.com/garrytan/gstack" target="_blank">Gstack</a></li>
+          <li><a href="https://github.com/bmad-code-org/BMAD-METHOD" target="_blank">BMAD Method</a></li>
+          <li><a href="https://github.com/revfactory/harness" target="_blank">Harness (RevFactory)</a></li>
+          <li><a href="https://github.com/revfactory/harness-100" target="_blank">Harness 100</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Videos & Articles</h4>
+        <ul style="font-size:0.7em;">
+          <li><a href="https://www.youtube.com/watch?v=OvZiSEZpzxs" target="_blank">gstack? 하네스 엔지니어링?</a></li>
+          <li><a href="https://www.youtube.com/watch?v=fD8NLPU0WYU" target="_blank">The BMAD Method (YouTube)</a></li>
+          <li><a href="https://news.hada.io/topic?id=27969" target="_blank">GeekNews: 하네스 소개</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1000,
+    height: 700,
+    margin: 0.1,
+    minScale: 0.2,
+    maxScale: 2.0,
+    hash: true,
+    center: false,
+    transition: 'fade',
+    backgroundTransition: 'fade',
+    plugins: [ RevealHighlight ],
+    slideNumber: 'c/t',
+    controls: true,
+    progress: true,
+    mouseWheel: true
+  });
+</script>
+</body>
+</html>
