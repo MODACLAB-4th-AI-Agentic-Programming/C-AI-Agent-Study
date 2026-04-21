@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude → Antigravity 세팅 마이그레이션</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #080c18;
+    --surface:  #0f1629;
+    --border:   #1e2d50;
+    --cyan:     #00e5c8;
+    --cyan-dim: #00e5c820;
+    --amber:    #f5a623;
+    --red:      #ff4d6d;
+    --text:     #c8d6f0;
+    --muted:    #4a5a7a;
+    --white:    #eef2ff;
+    --mono:     'Space Mono', monospace;
+    --sans:     'Syne', sans-serif;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 100;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* ── SLIDE DECK ── */
+  #deck {
+    width: 100vw; height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1; transform: translateY(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0; transform: translateY(-30px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* ── CORNER DECOR ── */
+  .slide::after {
+    content: '';
+    position: absolute;
+    bottom: 40px; right: 40px;
+    width: 60px; height: 60px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 40px; left: 40px;
+    width: 60px; height: 60px;
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  h1 {
+    font-family: var(--sans);
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--cyan); }
+  h1 .dim    { color: var(--muted); }
+
+  h2 {
+    font-family: var(--sans);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+  h2 .accent { color: var(--cyan); }
+  h2 .amber  { color: var(--amber); }
+
+  p.subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── TERMINAL BOX ── */
+  .terminal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    width: 100%;
+    max-width: 700px;
+    position: relative;
+  }
+  .terminal::before {
+    content: '● ● ●';
+    position: absolute; top: 12px; left: 16px;
+    font-size: 9px; letter-spacing: 5px;
+    color: var(--muted);
+  }
+  .terminal .t-title {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 16px;
+    padding-top: 4px;
+  }
+  .t-path  { color: var(--cyan); }
+  .t-cmd   { color: var(--amber); }
+  .t-ok    { color: #4ade80; }
+  .t-dim   { color: var(--muted); }
+  .t-file  { color: #c084fc; }
+  .t-num   { color: var(--red); }
+
+  /* ── CARDS ── */
+  .cards {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .cards.col-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards.col-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--cyan); }
+  .card .card-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+  .card h3 {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .card .tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    padding: 2px 8px;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%; max-width: 820px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    color: var(--cyan);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  tr:hover td { background: var(--cyan-dim); }
+  td code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 12px;
+    color: var(--cyan);
+  }
+  td .note { font-size: 11px; color: var(--muted); }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight-box {
+    border: 1px solid var(--cyan);
+    background: var(--cyan-dim);
+    border-radius: 8px;
+    padding: 20px 28px;
+    max-width: 700px;
+    text-align: center;
+  }
+  .highlight-box .big {
+    font-family: var(--sans);
+    font-size: clamp(16px, 2.5vw, 22px);
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 8px;
+  }
+  .highlight-box p {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ── SKILL PILLS ── */
+  .skills-grid {
+    display: flex; flex-wrap: wrap;
+    gap: 10px; justify-content: center;
+    max-width: 820px;
+  }
+  .skill-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--text);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .skill-pill:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* ── FINAL TREE ── */
+  .tree {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--text);
+  }
+  .tree .dir  { color: var(--amber); }
+  .tree .file { color: var(--cyan); }
+  .tree .note { color: var(--muted); font-size: 11px; }
+
+  /* ── PROGRESS BAR ── */
+  #progress {
+    position: fixed;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: var(--cyan);
+    transition: width 0.4s ease;
+    z-index: 200;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* ── NAV DOTS ── */
+  #dots {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 8px;
+    z-index: 200;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .dot.active {
+    background: var(--cyan);
+    transform: scale(1.5);
+    box-shadow: 0 0 6px var(--cyan);
+  }
+
+  /* ── NAV ARROWS ── */
+  .nav-arrow {
+    position: fixed;
+    top: 50%; transform: translateY(-50%);
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); cursor: pointer;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    font-size: 18px;
+    z-index: 200;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .nav-arrow:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+  #prev { left: 20px; }
+  #next { right: 20px; }
+
+  /* ── SLIDE NUM ── */
+  #slide-num {
+    position: fixed;
+    top: 24px; right: 40px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    z-index: 200;
+  }
+
+  /* ── GLOW TITLE ── */
+  .glow {
+    text-shadow: 0 0 40px rgba(0, 229, 200, 0.3);
+  }
+
+  /* ── ARROW INDICATOR ── */
+  .key-hint {
+    position: fixed;
+    bottom: 50px; right: 40px;
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em;
+    z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ─── SLIDE 1: TITLE ─── -->
+  <div class="slide active" id="s0">
+    <div class="label">// migration guide · 2026.04</div>
+    <h1 class="glow">
+      Claude Code<br/>
+      <span class="dim">→</span>
+      <span class="accent"> Antigravity</span>
+    </h1>
+    <p class="subtitle">멀티 에이전트 워크트리 세팅 마이그레이션 방법</p>
+  </div>
+
+  <!-- ─── SLIDE 2: WHY ─── -->
+  <div class="slide" id="s1">
+    <div class="label">// 01 · 목표</div>
+    <h2>기존 Claude 세팅을<br/><span class="accent">그대로</span> Antigravity에서 쓰기</h2>
+    <div class="cards col-3">
+      <div class="card">
+        <div class="card-icon">🌲</div>
+        <h3>Git WorkTree 구조</h3>
+        <p>dev / design / devops / qa 4개 워크트리, 역할별 브랜치 분리 유지</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h3>에이전트 규칙</h3>
+        <p>Claude의 agent/*.md 역할 정의를 Antigravity Rules로 변환</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Superpowers 스킬</h3>
+        <p>브레인스토밍, TDD, 디버깅 등 14개 스킬을 Antigravity에서도 사용</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 3: STRUCTURE COMPARE ─── -->
+  <div class="slide" id="s2">
+    <div class="label">// 02 · 구조 비교</div>
+    <h2>Claude vs <span class="accent">Antigravity</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th>개념</th>
+          <th>Claude Code</th>
+          <th>Antigravity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>에이전트 역할 정의</td>
+          <td><code>.claude/agents/*.md</code></td>
+          <td><code>.agents/rules/*.md</code></td>
+        </tr>
+        <tr>
+          <td>프로젝트 규칙</td>
+          <td><code>CLAUDE.md</code></td>
+          <td><code>GEMINI.md</code> / <code>AGENTS.md</code></td>
+        </tr>
+        <tr>
+          <td>크로스 플랫폼 규칙</td>
+          <td>—</td>
+          <td><code>AGENTS.md</code> <span class="note">← 양쪽 다 읽음</span></td>
+        </tr>
+        <tr>
+          <td>온디맨드 워크플로우</td>
+          <td>슬래시 커맨드</td>
+          <td><code>.agents/workflows/*.md</code></td>
+        </tr>
+        <tr>
+          <td>재사용 스킬</td>
+          <td><code>~/.claude/plugins/.../skills/</code></td>
+          <td><code>~/.gemini/antigravity/skills/</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── SLIDE 4: RULES ─── -->
+  <div class="slide" id="s3">
+    <div class="label">// 03 · Rules 파일 구성</div>
+    <h2>번호 순서로 로드되는 <span class="accent">6개 규칙 파일</span></h2>
+    <table>
+      <thead>
+        <tr><th>파일</th><th>내용</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>00-overview.md</code></td>
+          <td>앱 소개, 워크스페이스 전체 레이아웃, 기본 원칙</td>
+        </tr>
+        <tr>
+          <td><code>01-project-structure.md</code></td>
+          <td>WorkTree 경로, General/ 레이아웃, WSL 경로 주의사항</td>
+        </tr>
+        <tr>
+          <td><code>02-agent-roles.md</code></td>
+          <td>orchestrator · dev · design · devops · qa 역할 상세</td>
+        </tr>
+        <tr>
+          <td><code>03-git-workflow.md</code></td>
+          <td>브랜치 규칙, PR 순서 7단계, 훅 동작, 커밋 컨벤션</td>
+        </tr>
+        <tr>
+          <td><code>04-code-standards.md</code></td>
+          <td>zero-warning policy, Flutter 표준, l10n, LF/CRLF</td>
+        </tr>
+        <tr>
+          <td><code>05-inter-agent.md</code></td>
+          <td>히스토리 관리, PR 리뷰 흐름, 오류 기록, 세션 체크리스트</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:11px; color:var(--muted); margin-top:16px;">
+      ⟶ Antigravity는 알파벳순으로 파일을 로드하므로 번호를 붙여 읽는 순서를 보장
+    </p>
+  </div>
+
+  <!-- ─── SLIDE 5: SKILLS ─── -->
+  <div class="slide" id="s4">
+    <div class="label">// 04 · Superpowers 스킬 마이그레이션</div>
+    <h2><span class="accent">14개 스킬</span> 복사 한 줄로 완료</h2>
+    <div class="terminal" style="margin-bottom: 28px;">
+      <div class="t-title">terminal</div>
+      <div>
+        <span class="t-cmd">cp -r</span>
+        <span class="t-path"> ~/.claude/plugins/cache/.../superpowers/skills/*</span>
+      </div>
+      <div style="padding-left:60px;">
+        <span class="t-path">~/.gemini/antigravity/skills/</span>
+      </div>
+      <div style="margin-top:8px;"><span class="t-ok">✓</span><span class="t-dim"> 14개 스킬 복사 완료</span></div>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-pill">brainstorming</div>
+      <div class="skill-pill">systematic-debugging</div>
+      <div class="skill-pill">test-driven-development</div>
+      <div class="skill-pill">writing-plans</div>
+      <div class="skill-pill">executing-plans</div>
+      <div class="skill-pill">verification-before-completion</div>
+      <div class="skill-pill">dispatching-parallel-agents</div>
+      <div class="skill-pill">subagent-driven-development</div>
+      <div class="skill-pill">requesting-code-review</div>
+      <div class="skill-pill">receiving-code-review</div>
+      <div class="skill-pill">finishing-a-development-branch</div>
+      <div class="skill-pill">using-git-worktrees</div>
+      <div class="skill-pill">writing-skills</div>
+      <div class="skill-pill">using-superpowers</div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 6: FINAL STRUCTURE ─── -->
+  <div class="slide" id="s5">
+    <div class="label">// 05 · 최종 디렉토리 구조</div>
+    <h2>완성된 <span class="accent">파일 배치</span></h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:960px;">
+
+      <!-- 왼쪽: 프로젝트 -->
+      <div class="terminal">
+        <div class="t-title">프로젝트 워크스페이스</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:12px; line-height:1.5;">
+
+          <div style="color:var(--amber); font-size:13px; margin-bottom:4px;">MustGoOut/</div>
+
+          <div style="display:flex; flex-direction:column; gap:2px; padding-left:16px; border-left: 1px solid var(--border);">
+            <span style="color:var(--cyan); font-weight:700;">.agents/rules/</span>
+            <div style="display:flex; flex-direction:column; gap:1px; padding-left:14px; border-left: 1px solid var(--border); margin-top:2px;">
+              <span style="color:#c084fc;">00-overview.md</span>
+              <span style="color:#c084fc;">01-project-structure.md</span>
+              <span style="color:#c084fc;">02-agent-roles.md</span>
+              <span style="color:#c084fc;">03-git-workflow.md</span>
+              <span style="color:#c084fc;">04-code-standards.md</span>
+              <span style="color:#c084fc;">05-inter-agent.md</span>
+            </div>
+          </div>
+
+          <div style="height:6px;"></div>
+
+          <div style="display:flex; flex-direction:column; gap:3px; padding-left:16px; border-left: 1px solid var(--border);">
+            <span style="color:var(--amber);">MustGoOutNow/</span>
+            <span style="color:var(--amber);">MustGoOutNow_dev/</span>
+            <span style="color:var(--amber);">MustGoOutNow_design/</span>
+            <span style="color:var(--amber);">MustGoOutNow_devops/</span>
+            <span style="color:var(--amber);">MustGoOutNow_qa/</span>
+            <span style="color:var(--amber);">General/</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 오른쪽: 전역 스킬 -->
+      <div class="terminal">
+        <div class="t-title">전역 스킬 (Antigravity)</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:12px; line-height:1.5;">
+
+          <div style="color:var(--amber); font-size:13px; margin-bottom:4px;">~/.gemini/antigravity/</div>
+
+          <div style="display:flex; flex-direction:column; gap:2px; padding-left:16px; border-left: 1px solid var(--border);">
+            <span style="color:var(--cyan); font-weight:700;">skills/</span>
+            <div style="display:flex; flex-direction:column; gap:4px; padding-left:14px; border-left: 1px solid var(--border); margin-top:2px;">
+              <div>
+                <div style="color:var(--amber);">brainstorming/</div>
+                <div style="padding-left:14px; border-left:1px solid var(--border);"><span style="color:#c084fc;">SKILL.md</span></div>
+              </div>
+              <div>
+                <div style="color:var(--amber);">systematic-debugging/</div>
+                <div style="padding-left:14px; border-left:1px solid var(--border);"><span style="color:#c084fc;">SKILL.md</span></div>
+              </div>
+              <div>
+                <div style="color:var(--amber);">test-driven-development/</div>
+                <div style="padding-left:14px; border-left:1px solid var(--border);"><span style="color:#c084fc;">SKILL.md</span></div>
+              </div>
+              <div style="color:var(--muted); font-size:11px; padding-left:4px;">+ 11개 스킬 더 ...</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 7: REVIEW ─── -->
+  <div class="slide" id="s6">
+    <div class="label">// 06 · 사용 후기</div>
+    <h2>직접 써본 <span class="accent">솔직한 후기</span></h2>
+    <div class="cards col-2" style="max-width:860px;">
+      <div class="card" style="border-color: #4ade8044; justify-content:center; align-items:center; display:flex; flex-direction:column; text-align:center; padding:36px 24px;">
+        <span style="font-size:28px; margin-bottom:14px;">👍</span>
+        <h3 style="color:#4ade80; font-size:15px;">에디터 diff로 즉각 확인</h3>
+      </div>
+      <div class="card" style="border-color: #4ade8044; justify-content:center; align-items:center; display:flex; flex-direction:column; text-align:center; padding:36px 24px;">
+        <span style="font-size:28px; margin-bottom:14px;">👍</span>
+        <h3 style="color:#4ade80; font-size:15px;">자체 토큰으로 여유로운 사용</h3>
+      </div>
+      <div class="card" style="border-color: #ff4d6d44; justify-content:center; align-items:center; display:flex; flex-direction:column; text-align:center; padding:36px 24px;">
+        <span style="font-size:28px; margin-bottom:14px;">👎</span>
+        <h3 style="color:var(--red); font-size:15px;">병렬 에이전트 실행 미흡</h3>
+      </div>
+      <div class="card" style="border-color: var(--cyan)44; justify-content:center; align-items:center; display:flex; flex-direction:column; text-align:center; padding:36px 24px;">
+        <span style="font-size:28px; margin-bottom:14px;">💡</span>
+        <h3 style="font-size:15px;">프로그래머가 된 기분</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDE 8: DONE ─── -->
+  <div class="slide" id="s7">
+    <div class="label">// 완료</div>
+    <h1 class="glow" style="text-align:center; margin-bottom:24px;">
+      Migration<br/><span class="accent">Complete.</span>
+    </h1>
+    <div class="cards col-2" style="max-width:700px;">
+      <div class="card">
+        <div class="card-icon">✅</div>
+        <h3>Rules 6개 생성</h3>
+        <p><code>.agents/rules/</code>에 프로젝트 구조, 역할, Git 워크플로우, 코드 표준, 에이전트 소통 규칙 작성</p>
+        <span class="tag">always_on</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>스킬 14개 복사</h3>
+        <p><code>~/.gemini/antigravity/skills/</code>에 Superpowers 전체 스킬 복사, Antigravity에서 즉시 사용 가능</p>
+        <span class="tag">global</span>
+      </div>
+    </div>
+    <p class="subtitle" style="margin-top:24px;">Antigravity를 <code style="color:var(--cyan)">/home/dudxo13/Projects/MustGoOut/</code> 에서 열면 모든 규칙이 자동 적용됩니다</p>
+  </div>
+
+</div><!-- #deck -->
+
+<!-- UI -->
+<div id="progress"></div>
+<div id="dots"></div>
+<div id="slide-num">1 / 8</div>
+<button class="nav-arrow" id="prev">‹</button>
+<button class="nav-arrow" id="next">›</button>
+<div class="key-hint">← → 또는 클릭으로 이동</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dots   = document.getElementById('dots');
+  const prog   = document.getElementById('progress');
+  const numEl  = document.getElementById('slide-num');
+  let cur = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => go(i));
+    dots.appendChild(d);
+  });
+
+  function go(n) {
+    if (n < 0 || n >= slides.length) return;
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit');
+    setTimeout(() => slides[cur].classList.remove('exit'), 300);
+    cur = n;
+    slides[cur].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) =>
+      d.classList.toggle('active', i === cur));
+    prog.style.width = ((cur + 1) / slides.length * 100) + '%';
+    numEl.textContent = `${cur + 1} / ${slides.length}`; // auto from NodeList
+  }
+
+  document.getElementById('next').addEventListener('click', () => go(cur + 1));
+  document.getElementById('prev').addEventListener('click', () => go(cur - 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') go(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                     go(cur - 1);
+  });
+
+  // Init progress
+  prog.style.width = (1 / slides.length * 100) + '%';
+</script>
+</body>
+</html>
