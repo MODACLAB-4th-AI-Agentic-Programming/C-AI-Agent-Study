@@ -22,7 +22,8 @@
 - **최성민**: gstack을 활용한 superpowers 하네스 프로세스 강화
 - **김수경**: harness100 및 superpowers 도입 경험
 - **이정호**: Eval on Harness 적용 시도 및 경험
-- **임승현**: superpowers, gstack 스킬을 활용한 코드 및 설계 리뷰
+- **홍승현**: superpowers, gstack 스킬을 활용한 코드 및 설계 리뷰
+- **백도현**: 회사 이슈로 참여하지 못함
 
 ## Next Step (3주차 TODO)
 
