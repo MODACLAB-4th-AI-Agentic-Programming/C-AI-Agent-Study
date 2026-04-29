@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tech Spec — howstheweartoday Phase 1</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #5b8dee;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --warn: #f59e0b;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --border: #2d3154;
+    --code-bg: #0d1117;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── Slide container ── */
+  .slides { width: 100%; height: 100vh; position: relative; }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 52px 72px 40px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity .35s ease, transform .35s ease;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+  .slide.exit-left {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── Progress bar ── */
+  #progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .35s ease;
+    z-index: 100;
+  }
+
+  /* ── Nav ── */
+  #nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+  }
+  .nav-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background .2s, border-color .2s;
+  }
+  .nav-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+  #counter {
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ── Slide label ── */
+  .label {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 2.6rem; font-weight: 700; line-height: 1.2; }
+  h2 { font-size: 1.9rem; font-weight: 700; margin-bottom: 24px; }
+  h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent2); margin-bottom: 10px; }
+
+  .subtitle { color: var(--muted); font-size: 1rem; margin-top: 10px; }
+  .meta { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+
+  em { color: var(--accent); font-style: normal; font-weight: 600; }
+  strong { color: var(--accent2); }
+
+  /* ── Cards / panels ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .card-grid {
+    display: grid;
+    gap: 16px;
+  }
+  .card-grid.cols2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ── List ── */
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 8px; line-height: 1.65; font-size: 0.95rem; color: var(--text); }
+  li::marker { color: var(--accent); }
+  .check-list { list-style: none; padding-left: 0; }
+  .check-list li::before { content: "✓ "; color: var(--accent3); font-weight: 700; }
+  .x-list { list-style: none; padding-left: 0; }
+  .x-list li::before { content: "✕ "; color: #f87171; font-weight: 700; }
+
+  /* ── Code block ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    color: #cdd6f4;
+    white-space: pre;
+  }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent3);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent);
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(91,141,238,.06); }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .badge-blue { background: rgba(91,141,238,.2); color: var(--accent); border: 1px solid rgba(91,141,238,.3); }
+  .badge-green { background: rgba(52,211,153,.15); color: var(--accent3); border: 1px solid rgba(52,211,153,.25); }
+  .badge-yellow { background: rgba(245,158,11,.15); color: var(--warn); border: 1px solid rgba(245,158,11,.25); }
+  .badge-purple { background: rgba(167,139,250,.15); color: var(--accent2); border: 1px solid rgba(167,139,250,.25); }
+
+  /* ── Tag ── */
+  .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin: 2px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Flow arrow ── */
+  .flow { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.83rem;
+    color: var(--text);
+  }
+  .flow-arrow { color: var(--accent); font-size: 1.1rem; padding-top: 7px; }
+
+  /* ── Milestone ── */
+  .week-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+  }
+  .week-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .week-card li { font-size: 0.83rem; margin-bottom: 5px; }
+
+  /* ── Arch diagram ── */
+  .arch-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    text-align: center;
+    font-family: monospace;
+  }
+
+  /* ── Title slide ── */
+  .title-slide {
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 40%, rgba(91,141,238,.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 70%, rgba(167,139,250,.1) 0%, transparent 60%);
+  }
+  .title-slide h1 { font-size: 3rem; }
+  .title-slide .line { height: 3px; width: 80px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; margin: 20px 0; }
+  .pills { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+  /* ── Scrollable slide content ── */
+  .scroll-content { flex: 1; overflow-y: auto; padding-right: 4px; }
+  .scroll-content::-webkit-scrollbar { width: 4px; }
+  .scroll-content::-webkit-scrollbar-track { background: transparent; }
+  .scroll-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── spacing ── */
+  .gap8 { display: flex; flex-direction: column; gap: 8px; }
+  .gap12 { display: flex; flex-direction: column; gap: 12px; }
+  .gap16 { display: flex; flex-direction: column; gap: 16px; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .mt16 { margin-top: 16px; }
+  .mt20 { margin-top: 20px; }
+
+  p { font-size: 0.95rem; line-height: 1.75; color: var(--text); }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+
+  /* ── Highlight box ── */
+  .highlight {
+    border-left: 3px solid var(--accent);
+    background: rgba(91,141,238,.07);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+  .highlight-warn {
+    border-left: 3px solid var(--warn);
+    background: rgba(245,158,11,.07);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<div class="slides" id="slides">
+
+  <!-- ─────────────────────── Slide 1: Title ─────────────────────── -->
+  <div class="slide title-slide active" id="s1">
+    <div>
+      <div class="label">Tech Spec · Phase 1</div>
+      <h1>howstheweartoday</h1>
+      <div class="line"></div>
+      <p class="subtitle">날씨 기반 개인화 코디 추천 + 쿠팡 파트너스 제휴 링크 자동 생성</p>
+      <div class="pills mt16">
+        <span class="badge badge-blue">Expo (React Native)</span>
+        <span class="badge badge-green">Node.js + Express</span>
+        <span class="badge badge-purple">Railway PostgreSQL</span>
+        <span class="badge badge-yellow">Upstash Redis</span>
+        <span class="badge badge-blue">쿠팡 파트너스 API</span>
+        <span class="badge badge-green">기상청 단기예보 API</span>
+      </div>
+      <p class="meta mt16">작성일: 2026-04-28 &nbsp;·&nbsp; 작성자: KSK9820 &nbsp;·&nbsp; 상태: <span class="badge badge-yellow">Draft</span></p>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 2: 요약 ─────────────────────── -->
+  <div class="slide" id="s2">
+    <div class="label">01 · Overview</div>
+    <h2>요약</h2>
+    <div class="scroll-content">
+      <div class="highlight mt8">
+        날씨 데이터와 사용자 스타일 프로필을 결합해 <em>오늘의 기본 코디 1세트 + 시간대별 코디</em>를 추천하고,
+        아이템별 <em>쿠팡 파트너스 제휴 구매 링크</em>를 제공하는 모바일 앱의 Phase 1을 구현한다.
+      </div>
+      <div class="card-grid cols3 mt20">
+        <div class="card">
+          <h3>☁️ 날씨 수집</h3>
+          <p class="muted">기상청 단기예보 API를 서버에서 <strong>30분 캐시</strong>로 수집. 앱은 위치 기반으로 날씨와 코디를 서버에서 받는다.</p>
+        </div>
+        <div class="card">
+          <h3>👗 코디 조립</h3>
+          <p class="muted">수동 등록 없이 날씨 조건 + 유저 프로필로 검색 키워드를 <strong>자동 생성</strong>해 쿠팡 파트너스 API 실시간 호출.</p>
+        </div>
+        <div class="card">
+          <h3>💰 수익 구조</h3>
+          <p class="muted">쿠팡 파트너스 <strong>CPS 모델</strong>. 24시간 내 구매 시 수수료(패션 약 3~4%). 제휴 링크는 API 응답에 자동 포함.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 3: 배경 ─────────────────────── -->
+  <div class="slide" id="s3">
+    <div class="label">02 · Background</div>
+    <h2>배경 &amp; 왜 지금인가</h2>
+    <div class="scroll-content">
+      <p>매일 아침 <em>"오늘 뭐 입지?"</em>라는 고민은 10~30대에 공통적으로 발생하지만,
+         날씨 앱과 패션 앱이 분리되어 있어 두 정보를 연결하는 서비스가 없다.</p>
+
+      <div class="mt20">
+        <h3>초기 설계 — 수동 큐레이션 방식 (폐기)</h3>
+        <div class="card mt8">
+          <p class="muted">관리자가 코디 세트를 직접 등록하고 날씨 조건에 매핑하는 방식</p>
+          <ul class="x-list mt12">
+            <li>성별(3) × 연령대(3) × 스타일(6) × 날씨 구간(6) = 최대 <strong>324세트</strong> 등록 필요</li>
+            <li>상품 품절·시즌 변경 시 <strong>수동 교체</strong> 필요</li>
+            <li>진짜 개인화가 아닌 <strong>태그 필터링 수준</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt16">
+        <h3>채택한 방식 — 키워드 기반 동적 조회</h3>
+        <div class="highlight">
+          <strong>날씨 조건 → 검색 키워드 규칙</strong>만 관리자가 정의하고,
+          실제 상품은 쿠팡 API에서 동적으로 조회 →
+          운영 부담 최소화 + 실시간 재고 반영 + 진정한 개인화
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 4: 목표 ─────────────────────── -->
+  <div class="slide" id="s4">
+    <div class="label">03 · Goals</div>
+    <h2>목표 (Goals)</h2>
+    <div class="scroll-content">
+      <ul class="check-list gap8">
+        <li>앱 실행 시 현재 위치 기반 날씨 (기온, 체감, 강수확률, 바람) 자동 표시</li>
+        <li>홈 화면에 <strong>3시간 단위 기온 타임라인</strong> 가로 스크롤 + 탭 시 해당 시간대 코디 포커스 이동</li>
+        <li>날씨 조건 + 유저 프로필 → 키워드 자동 생성 → 쿠팡 파트너스 API로 상품 조회 → 코디 조립 표시</li>
+        <li>코디 아이템 클릭 시 <strong>인앱 브라우저</strong>로 쿠팡 제휴 상품 페이지 이동 (구매 시 수수료 발생)</li>
+        <li>카카오 / 구글 / 애플 소셜 로그인 + 온보딩(성별, 연령대, 스타일 선택) 후 개인화 코디 추천</li>
+        <li>관리자 웹에서 날씨 조건 → 키워드 매핑 규칙 등록·수정</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 5: Non-Goals ─────────────────────── -->
+  <div class="slide" id="s5">
+    <div class="label">04 · Scope</div>
+    <h2>목표가 아닌 것 (Non-Goals)</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8">
+        <div class="card">
+          <h3>Phase 2로 연기</h3>
+          <ul class="x-list gap8 mt8">
+            <li>코디 👍 / 👎 피드백 및 가중치 학습</li>
+            <li>네이버 소셜 로그인</li>
+            <li>다른 지역 날씨 + 즐겨찾기 위치</li>
+            <li>미세먼지 / 습도 데이터 반영</li>
+            <li>링크프라이스 연동</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Phase 3으로 연기</h3>
+          <ul class="x-list gap8 mt8">
+            <li>코디 저장 / 마이 코디북</li>
+            <li>푸시 알림</li>
+          </ul>
+          <hr class="divider">
+          <h3>폐기 결정</h3>
+          <ul class="x-list gap8">
+            <li>코디 세트 수동 등록</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 6: Architecture ─────────────────────── -->
+  <div class="slide" id="s6">
+    <div class="label">05 · Architecture</div>
+    <h2>시스템 아키텍처</h2>
+    <div class="scroll-content">
+      <pre>
+[Expo 앱]
+    │ REST API
+    ▼
+[Node.js + Express 서버] ── [Railway PostgreSQL + Prisma]
+    │                              (User, KeywordRule 저장)
+    ├── [Upstash Redis]
+    │       ├── 날씨 캐시 (TTL: 35분)
+    │       └── 코디 결과 캐시 (TTL: 3시간)
+    │       ▲
+    │       │ 30분마다 Cron
+    ├── [기상청 단기예보 API]
+    │
+    └── [쿠팡 파트너스 API]   ← 상품 검색 + 제휴 링크 자동 생성
+
+[관리자 웹 React Vite]        ← 날씨 조건 → 키워드 규칙 관리</pre>
+      <div class="card-grid cols3 mt16">
+        <div class="card"><h3>Expo App</h3><p class="muted">React Native. 위치 권한, 소셜 로그인, 인앱 브라우저.</p></div>
+        <div class="card"><h3>Express Server</h3><p class="muted">Railway 배포. 날씨 캐시 Cron, 키워드 생성, 코디 조립 API.</p></div>
+        <div class="card"><h3>Admin Web</h3><p class="muted">React + Vite. 날씨→키워드 규칙 CRUD.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 7: Revenue ─────────────────────── -->
+  <div class="slide" id="s7">
+    <div class="label">06 · Revenue</div>
+    <h2>제휴 수익 구조</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <h3 style="margin:0">쿠팡 파트너스</h3>
+            <span class="badge badge-green">Phase 1 채택</span>
+          </div>
+          <ul class="check-list gap8">
+            <li>CPS 모델 — 클릭 후 <strong>24시간 내 구매</strong> 시 수수료 지급</li>
+            <li>수수료율: 패션/의류 약 <strong>3~4%</strong></li>
+            <li>파트너 ID 포함된 제휴 링크를 API가 <strong>직접 반환</strong> (별도 변환 불필요)</li>
+            <li>월 정산, 최소 지급액 10,000원</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <h3 style="margin:0">네이버 쇼핑 API</h3>
+            <span class="badge badge-yellow">보조 데이터만</span>
+          </div>
+          <ul class="x-list gap8">
+            <li>네이버는 앱 개발자용 직접 CPS 프로그램 없음</li>
+            <li>Phase 1에서는 수익 채널로 미사용</li>
+          </ul>
+          <p class="muted mt12">→ 상품 검색 데이터 보완용으로만 활용 가능</p>
+        </div>
+      </div>
+      <div class="highlight-warn mt16">
+        ⚡ 수익은 <strong>쿠팡 파트너스 단일 채널</strong>로 단순화. 초기에 파트너스 심사 신청을 병행 진행 권장.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 8: Auth ─────────────────────── -->
+  <div class="slide" id="s8">
+    <div class="label">07 · Auth</div>
+    <h2>인증 (Passport.js + JWT)</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8">
+        <div>
+          <h3>소셜 로그인 플로우</h3>
+          <pre style="font-size:0.72rem">앱 → 카카오/구글 OAuth 페이지
+  → authorization code 서버 전달
+  → code → access_token 교환 → 유저 정보
+  → 신규: DB 저장 + isOnboarded = false
+  → JWT 발급 (access 7일 / refresh 30일)
+  → 앱: SecureStore에 저장
+
+애플: expo-apple-authentication
+  → identityToken → Apple 공개키로 검증
+  → 동일 JWT 플로우</pre>
+          <div class="highlight-warn mt12">
+            <strong>애플 로그인 필수</strong> — 앱스토어 가이드라인 4.8: 제3자 소셜 로그인 제공 시
+            Sign in with Apple 동등 제공 의무. 미포함 시 심사 거절.
+          </div>
+        </div>
+        <div class="gap12">
+          <div class="card">
+            <h3>JWT 전략</h3>
+            <table>
+              <tr><td><strong>access_token</strong></td><td>7일</td></tr>
+              <tr><td><strong>refresh_token</strong></td><td>30일</td></tr>
+              <tr><td>저장 위치</td><td>SecureStore</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3>JWT 갱신</h3>
+            <ul class="check-list gap8">
+              <li>access 만료 → refresh로 자동 갱신</li>
+              <li>refresh 만료 → 로그아웃 처리</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>플랫폼 노트</h3>
+            <p class="muted">Apple 로그인은 iOS 전용. <code>expo-apple-authentication</code> 사용. Android에서는 노출 안 함.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 9: Weather ─────────────────────── -->
+  <div class="slide" id="s9">
+    <div class="label">08 · Weather</div>
+    <h2>날씨 데이터 수집 &amp; 캐싱</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8">
+        <div class="card">
+          <h3>기상청 단기예보 API</h3>
+          <table>
+            <tr><th>엔드포인트</th><td><code>getVilageFcst</code></td></tr>
+            <tr><th>TMP</th><td>기온</td></tr>
+            <tr><th>WSD</th><td>풍속</td></tr>
+            <tr><th>POP</th><td>강수확률</td></tr>
+            <tr><th>PTY</th><td>강수형태</td></tr>
+            <tr><th>단위</th><td>3시간 단위 (00~21시)</td></tr>
+          </table>
+        </div>
+        <div class="gap12">
+          <div class="card">
+            <h3>캐싱 전략</h3>
+            <pre style="font-size:0.72rem">서버 Cron (30분마다)
+  → 주요 지역 격자 목록 API 호출
+  → Redis: "weather:{nx}:{ny}" TTL=35분
+
+앱 요청
+  → Redis hit  → 즉시 응답
+  → Redis miss → 기상청 호출 후 저장</pre>
+          </div>
+          <div class="card">
+            <h3>위경도 → 격자 변환</h3>
+            <p class="muted">기상청 Lambert Conformal Conic 공식을 서버 유틸(<code>grid.ts</code>)로 구현. 앱은 위경도만 전달.</p>
+          </div>
+          <div class="card">
+            <h3>체감온도</h3>
+            <p class="muted">기상청 API에서 직접 미제공 → 서버에서 기온 + 풍속으로 <strong>Wind Chill Index</strong> 계산.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 10: Keyword Logic ─────────────────────── -->
+  <div class="slide" id="s10">
+    <div class="label">09 · Core Feature</div>
+    <h2>키워드 기반 동적 코디 조립 (1/2)</h2>
+    <div class="scroll-content">
+      <div class="highlight mt8">
+        <strong>입력:</strong> 기온 12°C, 강수 없음 + 여성, 20대, 미니멀 스타일
+      </div>
+      <div class="flow mt16" style="align-items:stretch;gap:8px">
+        <div class="flow-step">날씨 → 기본 키워드<br><code>top: 니트</code><br><code>outer: 트렌치코트</code><br><code>bottom: 슬랙스</code></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">+ 성별 수식어<br><code>여성 니트</code><br><code>여성 트렌치코트</code></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">+ 스타일 수식어<br><code>여성 미니멀 니트</code><br><code>여성 미니멀 트렌치코트</code></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">+ 연령대 가격 필터<br>20대: <code>minPrice: 30000</code><br><code>maxPrice: 80000</code></div>
+      </div>
+      <div class="mt20">
+        <h3>날씨 조건 → 키워드 매핑 (관리자 DB 등록)</h3>
+        <table class="mt8">
+          <tr><th>기온 구간</th><th>top</th><th>outer</th><th>bottom</th></tr>
+          <tr><td>28°C+</td><td>반팔티, 민소매</td><td>—</td><td>반바지, 숏스커트</td></tr>
+          <tr><td>23~27°C</td><td>반팔티, 얇은 셔츠</td><td>—</td><td>면바지, 청바지</td></tr>
+          <tr><td>17~22°C</td><td>긴팔티, 얇은 니트</td><td>가디건, 얇은 자켓</td><td>청바지, 슬랙스</td></tr>
+          <tr><td>12~16°C</td><td>니트, 맨투맨</td><td>자켓, 트렌치코트</td><td>슬랙스, 청바지</td></tr>
+          <tr><td>7~11°C</td><td>두꺼운 니트, 후드</td><td>코트, 울 자켓</td><td>기모 바지</td></tr>
+          <tr><td>6°C↓</td><td>기모 맨투맨</td><td>롱패딩, 두꺼운 코트</td><td>기모 레깅스</td></tr>
+          <tr><td>비/눈</td><td>기온 키워드 유지</td><td>방수 자켓, 레인코트</td><td>기온 키워드 유지</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 11: Coupang API ─────────────────────── -->
+  <div class="slide" id="s11">
+    <div class="label">09 · Core Feature</div>
+    <h2>키워드 기반 동적 코디 조립 (2/2)</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8">
+        <div>
+          <h3>쿠팡 파트너스 API 호출</h3>
+          <pre style="font-size:0.72rem">GET /v2/providers/affiliate_open_api/
+    apis/openapi/products/search
+
+파라미터:
+  keyword:  "여성 미니멀 트렌치코트"
+  limit:    5
+  minPrice: 30000
+  maxPrice: 80000
+
+응답 예시:
+{
+  "productName": "여성 미니멀 트렌치코트 베이지",
+  "productImage": "https://...",
+  "productPrice": 59000,
+  "productUrl": "https://link.coupang.com/a/{파트너ID}/..."
+  // ↑ 제휴 링크 자동 포함
+}</pre>
+          <p class="muted mt8">카테고리(top / outer / bottom)별 <strong>병렬 호출</strong> → 상위 1개 선택</p>
+        </div>
+        <div>
+          <h3>코디 조립 서버 처리 흐름</h3>
+          <div class="gap8 mt8">
+            <div class="flow-step">1. 위경도 → nx, ny 변환</div>
+            <div class="flow-step">2. Redis 날씨 캐시 조회</div>
+            <div class="flow-step">3. 기온 + 강수형태 → KeywordRule 조회</div>
+            <div class="flow-step">4. 유저 프로필 로드 (gender, ageGroup, styles)</div>
+            <div class="flow-step">5. 카테고리별 최종 키워드 생성</div>
+            <div class="flow-step">6. Redis 코디 캐시 확인 (TTL 3시간)<br><span class="muted" style="font-size:0.78rem">hit → 즉시 반환 / miss → 쿠팡 API 호출 → 저장</span></div>
+            <div class="flow-step">7. 기본 코디 + 시간대별 코디(일교차 ≥3°C) 반환</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 12: API Response ─────────────────────── -->
+  <div class="slide" id="s12">
+    <div class="label">10 · API</div>
+    <h2>API 응답 형식</h2>
+    <div class="scroll-content">
+      <pre style="font-size:0.76rem">{
+  "weather": {
+    "tmp": 12, "sensoryTmp": 9, "pop": 20, "wsd": 4.0,
+    "hourly": [{"time": "0600", "tmp": 8}, ...]
+  },
+  "outfits": [
+    {
+      "slot": "base",
+      "reason": "체감 9°C, 바람 강해요. 트렌치코트 필수!",
+      "items": [
+        {
+          "category": "outer",
+          "name": "여성 미니멀 트렌치코트 베이지",
+          "price": 59000,
+          "imageUrl": "https://...",
+          "affiliateUrl": "https://link.coupang.com/a/..."  ← 제휴 링크
+        },
+        { "category": "top", ... },
+        { "category": "bottom", ... }
+      ]
+    },
+    {
+      "slot": "evening",
+      "reason": "저녁 9°C로 많이 쌀해져요. 두꺼운 레이어 추가!",
+      "items": [...]
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 13: DB Schema ─────────────────────── -->
+  <div class="slide" id="s13">
+    <div class="label">11 · DB</div>
+    <h2>DB 스키마 (Prisma)</h2>
+    <div class="scroll-content">
+      <pre style="font-size:0.76rem">model User {
+  id          String   @id @default(cuid())
+  provider    String   // "kakao" | "google" | "apple"
+  providerId  String
+  gender      String?  // "male" | "female" | "none"
+  ageGroup    String?  // "10s" | "20s" | "30s"
+  styles      String[] // ["casual", "minimal", ...]
+  isOnboarded Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  @@unique([provider, providerId])
+}
+
+model KeywordRule {  // 관리자가 등록하는 날씨 조건 → 키워드 매핑
+  id       String   @id @default(cuid())
+  tmpMin   Int      // 기온 최솟값
+  tmpMax   Int      // 기온 최댓값
+  ptyType  Int?     // 강수형태 (null=무관, 1=비, 3=눈)
+  category String   // "top" | "outer" | "bottom" | "shoes"
+  keywords String[] // ["니트", "맨투맨"] — 랜덤 1개 선택
+}
+
+model StyleModifier {  // 스타일 → 키워드 수식어 매핑
+  id        String   @id @default(cuid())
+  styleTag  String   // "casual" | "minimal" | ...
+  modifiers String[] // ["캐주얼", "데일리"]
+}</pre>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 14: API Endpoints ─────────────────────── -->
+  <div class="slide" id="s14">
+    <div class="label">12 · API</div>
+    <h2>API 엔드포인트 명세</h2>
+    <div class="scroll-content">
+      <table class="mt8">
+        <tr><th>Method</th><th>Path</th><th>설명</th><th>인증</th></tr>
+        <tr><td><span class="badge badge-blue">POST</span></td><td><code>/api/auth/kakao</code></td><td>카카오 로그인</td><td>—</td></tr>
+        <tr><td><span class="badge badge-blue">POST</span></td><td><code>/api/auth/google</code></td><td>구글 로그인</td><td>—</td></tr>
+        <tr><td><span class="badge badge-blue">POST</span></td><td><code>/api/auth/apple</code></td><td>애플 로그인</td><td>—</td></tr>
+        <tr><td><span class="badge badge-blue">POST</span></td><td><code>/api/auth/refresh</code></td><td>토큰 갱신</td><td>—</td></tr>
+        <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/users/me/onboarding</code></td><td>온보딩 정보 저장</td><td>✓ JWT</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/weather</code></td><td>날씨 조회 (lat, lng)</td><td>✓ JWT</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/outfits</code></td><td>코디 추천 (lat, lng)</td><td>✓ JWT</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/admin/keyword-rules</code></td><td>키워드 규칙 목록</td><td>Admin</td></tr>
+        <tr><td><span class="badge badge-blue">POST</span></td><td><code>/api/admin/keyword-rules</code></td><td>키워드 규칙 등록</td><td>Admin</td></tr>
+        <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/admin/keyword-rules/:id</code></td><td>키워드 규칙 수정</td><td>Admin</td></tr>
+        <tr><td><span class="badge badge-purple">DELETE</span></td><td><code>/api/admin/keyword-rules/:id</code></td><td>키워드 규칙 삭제</td><td>Admin</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/admin/style-modifiers</code></td><td>스타일 수식어 목록</td><td>Admin</td></tr>
+        <tr><td><span class="badge badge-yellow">PUT</span></td><td><code>/api/admin/style-modifiers/:id</code></td><td>스타일 수식어 수정</td><td>Admin</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 15: Folder Structure ─────────────────────── -->
+  <div class="slide" id="s15">
+    <div class="label">13 · Structure</div>
+    <h2>프로젝트 폴더 구조</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols3 mt8">
+        <div class="card">
+          <h3>📦 server/</h3>
+          <pre style="font-size:0.7rem;border:none;background:transparent;padding:0">src/
+├── routes/
+├── controllers/
+├── services/
+│   ├── weather.service.ts
+│   ├── keyword.service.ts
+│   ├── coupang.service.ts
+│   ├── outfit.service.ts
+│   └── auth.service.ts
+└── utils/
+    ├── grid.ts
+    └── windchill.ts</pre>
+        </div>
+        <div class="card">
+          <h3>📱 app/</h3>
+          <pre style="font-size:0.7rem;border:none;background:transparent;padding:0">src/
+├── screens/
+│   ├── SplashScreen.tsx
+│   ├── OnboardingScreen.tsx
+│   ├── HomeScreen.tsx
+│   ├── OutfitDetailScreen.tsx
+│   └── MyPageScreen.tsx
+└── components/
+    ├── WeatherSummary.tsx
+    ├── TimelineBar.tsx
+    ├── OutfitCard.tsx
+    └── ItemCard.tsx</pre>
+        </div>
+        <div class="card">
+          <h3>🖥️ admin/</h3>
+          <pre style="font-size:0.7rem;border:none;background:transparent;padding:0">src/
+└── pages/
+    ├── KeywordRuleList.tsx
+    ├── KeywordRuleForm.tsx
+    └── StyleModifierList.tsx</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 16: Error Handling ─────────────────────── -->
+  <div class="slide" id="s16">
+    <div class="label">14 · Reliability</div>
+    <h2>에러 처리</h2>
+    <div class="scroll-content">
+      <table class="mt8">
+        <tr><th>상황</th><th>처리 방식</th></tr>
+        <tr>
+          <td><strong>기상청 API 오류</strong></td>
+          <td>Redis 마지막 정상 데이터 반환. 없으면 "날씨 정보를 불러올 수 없어요" 표시</td>
+        </tr>
+        <tr>
+          <td><strong>쿠팡 API 오류 / 결과 없음</strong></td>
+          <td>키워드 단순화 후 재시도 (수식어 제거). 그래도 없으면 해당 카테고리 제외하고 반환</td>
+        </tr>
+        <tr>
+          <td><strong>위치 권한 거부</strong></td>
+          <td>서울 기본값(37.5665, 126.9780)으로 대체 후 안내 배너 표시</td>
+        </tr>
+        <tr>
+          <td><strong>JWT 만료</strong></td>
+          <td>자동 refresh. 실패 시 로그인 화면으로 이동</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 17: Considerations ─────────────────────── -->
+  <div class="slide" id="s17">
+    <div class="label">15 · Decisions</div>
+    <h2>주요 설계 결정 사항</h2>
+    <div class="scroll-content">
+      <div class="gap12 mt8">
+        <div class="card">
+          <strong>수동 코디 등록 폐기</strong>
+          <p class="muted mt8">성별×연령×스타일×날씨 조합 수백 세트 + 품절 시 수동 교체 → 운영 부담. 날씨→키워드 규칙만 관리하고 상품은 API 동적 조회로 전환.</p>
+        </div>
+        <div class="card">
+          <strong>네이버 쇼핑 수익 없음 확인</strong>
+          <p class="muted mt8">초기 "네이버 쇼핑 커넥트"를 수익 채널로 포함했으나, 앱 개발자용 직접 CPS 없음 확인. 수익은 쿠팡 파트너스 단일 채널로 단순화.</p>
+        </div>
+        <div class="card">
+          <strong>Supabase 미사용 결정</strong>
+          <p class="muted mt8">벤더 의존성 최소화 + Node.js 직접 제어를 위해 Railway PostgreSQL + Prisma + Passport.js로 분리.</p>
+        </div>
+        <div class="card">
+          <strong>시간대별 코디 &amp; 애플 로그인 Phase 1 포함</strong>
+          <p class="muted mt8">일교차 대응이 서비스 핵심 차별점. 애플 로그인은 앱스토어 가이드라인 4.8 의무사항.</p>
+        </div>
+        <div class="card">
+          <strong>코디 결과 캐시 3시간</strong>
+          <p class="muted mt8">날씨가 3시간 단위로 변하고, 쿠팡 API 호출 비용 절감. 동일 유저+날씨 조건 결과는 3시간 캐시.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────── Slide 18: Milestones ─────────────────────── -->
+  <div class="slide" id="s18">
+    <div class="label">16 · Milestones</div>
+    <h2>마일스톤</h2>
+    <div class="scroll-content">
+      <div class="card-grid cols2 mt8" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div class="week-card">
+          <div class="week-title">Week 1 — 서버 기반 구축</div>
+          <ul class="check-list gap8">
+            <li>Railway PostgreSQL + Prisma 스키마 정의</li>
+            <li>기상청 API + 격자 변환 + 체감온도 유틸</li>
+            <li>Upstash Redis + 날씨 30분 캐시 Cron</li>
+            <li>Passport.js 카카오/구글/애플 OAuth + JWT</li>
+          </ul>
+        </div>
+        <div class="week-card">
+          <div class="week-title">Week 2 — 코어 API 개발</div>
+          <ul class="check-list gap8">
+            <li>쿠팡 파트너스 API + 키워드 기반 상품 검색</li>
+            <li>키워드 생성 로직 (날씨 → 유저 프로필 수식어)</li>
+            <li>코디 조립 API + Redis 결과 캐시</li>
+            <li>온보딩 저장 API</li>
+          </ul>
+        </div>
+        <div class="week-card">
+          <div class="week-title">Week 3 — 관리자 웹 + 앱 기반</div>
+          <ul class="check-list gap8">
+            <li>관리자 웹: 키워드 규칙 CRUD UI</li>
+            <li>관리자 웹: 스타일 수식어 관리 UI</li>
+            <li>Expo 앱: 소셜 로그인 + 온보딩 화면</li>
+          </ul>
+        </div>
+        <div class="week-card">
+          <div class="week-title">Week 4 — 앱 홈 + 코디 화면</div>
+          <ul class="check-list gap8">
+            <li>홈 화면: 날씨 요약 + 시간대별 타임라인</li>
+            <li>오늘의 기본 코디 + 시간대별 코디 카드</li>
+            <li>코디 상세 + 인앱 브라우저 쿠팡 링크</li>
+          </ul>
+        </div>
+        <div class="week-card" style="grid-column:1/-1">
+          <div class="week-title">Week 5~6 — QA + 출시 준비</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <ul class="check-list gap8">
+              <li>전체 날씨 구간 + 스타일 수식어 관리자 입력</li>
+              <li>전체 플로우 QA</li>
+            </ul>
+            <ul class="check-list gap8">
+              <li>쿠팡 파트너스 심사 신청 (초기 병행 진행 권장)</li>
+              <li>TestFlight / 내부 테스트 배포</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Nav ── -->
+<div id="nav">
+  <button class="nav-btn" id="prevBtn" onclick="go(-1)">← Prev</button>
+  <span id="counter">1 / 18</span>
+  <button class="nav-btn" id="nextBtn" onclick="go(1)">Next →</button>
+</div>
+
+<script>
+  const total = 18;
+  let cur = 1;
+
+  function go(dir) {
+    const next = cur + dir;
+    if (next < 1 || next > total) return;
+    const from = document.getElementById('s' + cur);
+    const to   = document.getElementById('s' + next);
+    from.classList.remove('active');
+    from.classList.add(dir > 0 ? 'exit-left' : '');
+    setTimeout(() => from.classList.remove('exit-left'), 400);
+    to.style.transform = dir > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+    to.classList.add('active');
+    setTimeout(() => { to.style.transform = ''; }, 10);
+    cur = next;
+    update();
+  }
+
+  function update() {
+    document.getElementById('counter').textContent = cur + ' / ' + total;
+    document.getElementById('progress').style.width = ((cur / total) * 100) + '%';
+    document.getElementById('prevBtn').disabled = cur === 1;
+    document.getElementById('nextBtn').disabled = cur === total;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
+  });
+
+  // touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  update();
+</script>
+</body>
+</html>
