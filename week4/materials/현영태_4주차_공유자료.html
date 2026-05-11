@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SilverWorker 스터디 공유</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #F5F5F5; --bg-2: #FAFAFA; --surface: #FFFFFF; --surface-2: #E8EDF5;
+    --text: #212121; --text-dim: #616161; --text-faint: #9E9E9E;
+    --accent: #1565C0; --accent-2: #0D47A1; --accent-3: #E65100;
+    --green: #2E7D32; --orange: #E65100; --red: #C62828;
+    --border: #E0E0E0; --border-2: #BDBDBD;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; font-family:'Pretendard','Inter',system-ui,-apple-system,sans-serif; background:#000; color:var(--text); font-size:20px; -webkit-font-smoothing:antialiased; letter-spacing:-0.01em; }
+
+  .stage { position:fixed; inset:0; overflow:hidden; background:var(--bg); }
+  .slides-container { position:absolute; top:50%; left:50%; width:1920px; height:var(--canvas-h,1080px); transform:translate(-50%,-50%) scale(var(--scale,1)); transform-origin:center center; background:var(--bg); }
+  .slide { position:absolute; top:0; left:0; width:1920px; min-height:1080px; display:flex; flex-direction:column; padding:64px 100px 96px; opacity:0; transform:translateY(24px) scale(0.99); transition:opacity .55s cubic-bezier(.2,.8,.2,1), transform .55s cubic-bezier(.2,.8,.2,1); pointer-events:none; background:var(--bg); }
+  .slide.active { opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+
+  .slide-eyebrow { font-family:var(--mono); font-size:.85rem; font-weight:600; color:var(--accent); letter-spacing:.14em; text-transform:uppercase; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .slide-eyebrow .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .slide-title { font-size:3rem; font-weight:800; letter-spacing:-0.035em; line-height:1.05; margin-bottom:14px; color:var(--text); }
+  .slide-lead { font-size:1.25rem; color:var(--text-dim); font-weight:400; max-width:900px; line-height:1.6; margin-bottom:36px; }
+
+  .grad-text { background:linear-gradient(120deg,#1565C0 10%,#42A5F5 50%,#0D47A1 90%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .grad-text-silver { background:linear-gradient(120deg,#B0BEC5 10%,#CFD8DC 40%,#90A4AE 70%,#B0BEC5 90%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+
+  .cover { justify-content:center; align-items:flex-start; }
+  .cover-tag { display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:.85rem; color:var(--accent); padding:8px 16px; border:1.5px solid var(--border); border-radius:999px; background:var(--surface); margin-bottom:28px; }
+  .live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .cover h1 { font-size:5.5rem; font-weight:900; letter-spacing:-0.05em; line-height:.95; margin-bottom:28px; }
+  .cover-sub { font-size:1.25rem; color:var(--text-dim); max-width:760px; line-height:1.55; font-weight:400; margin-bottom:56px; }
+  .cover-meta { display:flex; gap:36px; flex-wrap:wrap; font-family:var(--mono); font-size:.9rem; color:var(--text-faint); }
+  .cover-meta strong { color:var(--text); font-weight:600; }
+
+  .bento { display:grid; gap:18px; width:100%; flex:1; }
+  .bento.cols-2 { grid-template-columns:repeat(2,1fr); grid-auto-rows:minmax(140px,auto); }
+  .bento.cols-3 { grid-template-columns:repeat(3,1fr); grid-auto-rows:minmax(140px,auto); }
+  .bento.cols-4 { grid-template-columns:repeat(4,1fr); grid-auto-rows:minmax(140px,auto); }
+  .bento.cols-6 { grid-template-columns:repeat(6,1fr); grid-auto-rows:minmax(120px,auto); }
+
+  .card { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px 30px; transition:border-color .3s,box-shadow .3s; overflow:hidden; }
+  .card:hover { border-color:var(--accent); box-shadow:0 2px 16px rgba(21,101,192,0.08); }
+  .card.feature { background:linear-gradient(180deg,rgba(21,101,192,0.06),rgba(21,101,192,0.01)),var(--surface); border-color:rgba(21,101,192,0.2); }
+  .card.accent2 { background:linear-gradient(180deg,rgba(13,71,161,0.05),rgba(13,71,161,0.01)),var(--surface); border-color:rgba(13,71,161,0.18); }
+  .card-label { font-family:var(--mono); font-size:.85rem; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px; }
+  .card-h { font-size:1.5rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:10px; color:var(--text); }
+  .card-h.lg { font-size:1.8rem; }
+  .card-p { font-size:1.15rem; color:var(--text-dim); line-height:1.65; }
+  .card-p ul { list-style:none; padding:0; margin-top:6px; }
+  .card-p li { padding:5px 0; padding-left:18px; position:relative; }
+  .card-p li::before { content:''; position:absolute; left:0; top:13px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4; }
+  .card-p code { font-family:var(--mono); font-size:1rem; color:var(--accent-2); background:rgba(21,101,192,0.08); padding:2px 6px; border-radius:4px; }
+
+  .span-2 { grid-column:span 2; } .span-3 { grid-column:span 3; } .span-4 { grid-column:span 4; } .row-2 { grid-row:span 2; }
+
+  .stat-num { font-family:var(--mono); font-size:3rem; font-weight:700; letter-spacing:-0.04em; line-height:1; color:var(--accent); }
+  .stat-num.sm { font-size:2.2rem; }
+  .stat-cap { font-size:.9rem; color:var(--text-dim); margin-top:6px; }
+
+  .chip { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:8px; background:var(--bg); border:1px solid var(--border); font-family:var(--mono); font-size:.95rem; color:var(--text); margin:4px 6px 4px 0; }
+  .chip .dot { width:6px; height:6px; border-radius:50%; }
+
+  .code { font-family:var(--mono); font-size:.98rem; line-height:1.75; background:#F0F4F8; border:1px solid var(--border); border-radius:12px; padding:18px 22px; color:#37474F; overflow-x:auto; white-space:pre-wrap; word-break:break-word; tab-size:2; }
+
+  .pipeline { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; align-items:stretch; }
+  .pipe-step { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px 16px; text-align:center; position:relative; }
+  .pipe-step .num { font-family:var(--mono); font-size:1rem; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .pipe-step .ttl { font-size:1.2rem; font-weight:700; margin-bottom:6px; }
+  .pipe-step .des { font-size:1rem; color:var(--text-dim); line-height:1.5; }
+  .pipe-step:not(:last-child)::after { content:'→'; position:absolute; right:-16px; top:50%; transform:translateY(-50%); color:var(--accent); font-family:var(--mono); font-size:1.2rem; z-index:2; }
+
+  .flow { display:flex; flex-direction:column; gap:10px; }
+  .flow-row { display:flex; align-items:center; gap:14px; padding:14px 18px; background:var(--bg); border:1px solid var(--border); border-radius:12px; font-family:var(--mono); font-size:.9rem; }
+  .flow-row .src { color:var(--accent); font-weight:600; min-width:180px; }
+  .flow-row .arr { color:var(--text-faint); }
+  .flow-row .dst { color:var(--text); }
+  .flow-row .note { margin-left:auto; color:var(--text-faint); font-size:.8rem; }
+
+  .agent { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; position:relative; overflow:hidden; }
+  .agent::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--agent-color,var(--accent)); }
+  .agent.imp { --agent-color:linear-gradient(90deg,#1565C0,#42A5F5); }
+  .agent.rev1 { --agent-color:linear-gradient(90deg,#0D47A1,#1976D2); }
+  .agent.rev2 { --agent-color:linear-gradient(90deg,#E65100,#FF9800); }
+  .agent-name { font-family:var(--mono); font-size:.95rem; color:var(--accent); text-transform:uppercase; letter-spacing:.12em; margin-bottom:6px; }
+  .agent-h { font-size:1.5rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:12px; color:var(--text); }
+  .agent-tools { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+
+  .closing { justify-content:center; align-items:center; text-align:center; }
+  .closing h1 { font-size:4rem; font-weight:800; letter-spacing:-0.04em; line-height:1.1; max-width:900px; margin-bottom:24px; }
+  .closing p { color:var(--text-dim); font-size:1.1rem; max-width:600px; line-height:1.7; margin-bottom:36px; }
+  .signature { font-family:var(--mono); color:var(--text-faint); font-size:.9rem; }
+
+  .nav { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); border:1px solid var(--border); padding:8px 14px; border-radius:999px; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+  .nav-btn { background:transparent; border:none; color:var(--text-dim); width:32px; height:32px; border-radius:50%; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:1rem; }
+  .nav-btn:hover { color:var(--accent); background:var(--surface-2); }
+  .nav-page { font-family:var(--mono); font-size:.8rem; color:var(--text-dim); padding:0 10px; min-width:60px; text-align:center; }
+  .nav-page strong { color:var(--text); font-weight:600; }
+  .nav-dots { display:flex; gap:5px; padding-left:6px; border-left:1px solid var(--border); margin-left:4px; padding-left:12px; }
+  .nav-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; border:none; transition:all .2s; }
+  .nav-dot.active { background:var(--accent); width:24px; border-radius:4px; }
+
+  .top-meta { position:fixed; top:24px; right:32px; font-family:var(--mono); font-size:.78rem; color:var(--text-faint); letter-spacing:.1em; z-index:50; display:flex; align-items:center; gap:14px; }
+  .top-meta .sep { width:24px; height:1px; background:var(--border-2); }
+
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+
+  /* Phone mockup (custom) */
+  .phone-frame { width:260px; height:520px; background:var(--surface); border-radius:28px; box-shadow:0 16px 48px rgba(0,0,0,0.18),0 0 0 6px #2a2a2a; overflow:hidden; position:relative; display:flex; flex-direction:column; margin:0 auto; font-size:12px; }
+  .phone-notch { position:absolute; top:14px; left:50%; transform:translateX(-50%); width:10px; height:10px; background:#1a1a1a; border-radius:50%; z-index:10; box-shadow:inset 0 0 2px rgba(0,0,0,0.5); }
+  .phone-content { flex:1; overflow-y:auto; padding:14px; background:var(--bg); }
+  .phone-content.white-bg { background:var(--surface); }
+  .phone-appbar { height:48px; background:var(--surface); display:flex; align-items:center; padding:0 14px; border-bottom:1px solid var(--border); font-weight:700; font-size:15px; color:var(--text); flex-shrink:0; }
+  .phone-bottom-nav { height:48px; background:var(--surface); border-top:1px solid var(--border); display:flex; justify-content:space-around; align-items:center; font-size:10px; color:var(--text-faint); flex-shrink:0; }
+  .phone-bottom-nav .nav-item.active { color:var(--accent); font-weight:700; }
+
+  .ph-card { background:var(--surface); border-radius:10px; padding:12px; margin-bottom:6px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .ph-headline { font-size:17px; font-weight:700; margin-bottom:4px; }
+  .ph-title { font-size:14px; font-weight:700; margin-bottom:2px; }
+  .ph-body { font-size:12px; line-height:1.5; color:var(--text); }
+  .ph-caption { font-size:11px; color:var(--text-faint); }
+  .ph-price { font-size:14px; font-weight:700; color:var(--accent); }
+  .ph-chip { display:inline-block; padding:4px 8px; background:var(--bg); border-radius:6px; font-size:10px; color:var(--text-dim); margin-right:3px; }
+  .ph-chip.primary { background:var(--accent); color:#fff; }
+  .ph-badge { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:700; }
+  .ph-badge.light { color:var(--green); }
+  .ph-badge.moderate { color:var(--orange); }
+  .ph-badge.heavy { color:var(--red); }
+  .ph-input { width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; font-size:13px; background:var(--surface); color:var(--text); margin-bottom:8px; font-family:inherit; }
+  .ph-input:focus { outline:none; border-color:var(--accent); }
+  .ph-btn { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; text-align:center; }
+  .ph-btn:disabled { background:var(--text-faint); }
+  .ph-section { font-size:12px; font-weight:700; color:var(--text-dim); margin:10px 0 6px; }
+  .ph-row { display:flex; margin-bottom:4px; font-size:11px; }
+  .ph-label { width:55px; color:var(--text-faint); }
+  .ph-value { flex:1; color:var(--text); }
+  .ph-otp { display:flex; justify-content:space-between; margin:16px 0; }
+  .ph-otp-box { width:34px; height:42px; border:2px solid var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+  .ph-otp-box.filled { border-color:var(--accent); }
+  .ph-safety { background:linear-gradient(180deg,rgba(21,101,192,0.06),rgba(21,101,192,0.01)),var(--surface); border:1px solid rgba(21,101,192,0.15); border-radius:10px; padding:10px; margin-bottom:8px; }
+  .ph-safety-title { font-size:11px; font-weight:700; color:var(--accent); margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<div class="top-meta">
+  <span>SILVERWORKER</span>
+  <span class="sep"></span>
+  <span>스터디 공유 · 2026.05</span>
+</div>
+
+<div class="stage">
+<div class="slides-container" id="slides">
+
+  <!-- 1. COVER -->
+  <section class="slide cover active">
+    <div class="cover-tag"><span class="live-dot"></span>STUDY RETROSPECTIVE</div>
+    <h1><span class="grad-text-silver">SilverWorker</span></h1>
+    <p class="cover-sub">60대 이상 시니어 전용 구인구직 앱 개발기<br>Flutter × Firebase 기반 2주 MVP 스프린트 공유</p>
+    <div class="cover-meta">
+      <span>2026.05 · <strong>팀 내부 회고</strong></span>
+      <span>STACK · <strong>Flutter + Firebase</strong></span>
+      <span>MEMBERS · <strong>스터디 팀</strong></span>
+    </div>
+  </section>
+
+  <!-- 2. OVERVIEW -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>OVERVIEW</div>
+    <h2 class="slide-title">프로젝트 개요</h2>
+    <p class="slide-lead">고령화 사회에서 60대 이상 시니어 분들이 안전하고 적합한 일자리를 쉽게 찾을 수 있도록 돕는 모바일 앱입니다.</p>
+    <div class="bento cols-2">
+      <div class="card feature" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">CORE VALUE</div>
+        <div class="card-h lg">세이프티 큐레이션</div>
+        <p class="card-p">신체 강도 3단계와 6종 physical badge로 시니어에게 적합한 일자리를 선별합니다.</p>
+        <ul style="margin-top:12px; list-style:none;">
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>대상: 60대 이상 시니어 구직자</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>데이터: 고용24 API + Mock 30건</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>기간: 2주 MVP (Day 1~14)</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame" style="width:240px; height:480px;">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar">은빛일자리</div>
+          <div class="phone-content">
+            <div class="ph-card">
+              <div class="ph-title">아파트 경비원 모집</div>
+              <div class="ph-caption">종로구청</div>
+              <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="ph-chip">정규직</span>
+                <span class="ph-badge light">● 가벼움</span>
+              </div>
+            </div>
+            <div class="ph-card">
+              <div class="ph-title">사무실 청소 담당</div>
+              <div class="ph-caption">중구청</div>
+              <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="ph-chip">단기</span>
+                <span class="ph-badge moderate">● 보통</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-bottom-nav">
+            <span class="nav-item active">홈</span>
+            <span class="nav-item">지원현황</span>
+            <span class="nav-item">마이페이지</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TECH STACK -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>TECH STACK</div>
+    <h2 class="slide-title">기술 스택</h2>
+    <p class="slide-lead">빠른 MVP 개발과 시니어 UX 최적화를 위해 선택한 기술들</p>
+    <div class="bento cols-4">
+      <div class="card feature">
+        <div class="card-label">FRONTEND</div>
+        <div class="card-h">Flutter 3.x</div>
+        <p class="card-p">Dart 기반 크로스플랫폼. iOS/Android UI 동일.</p>
+        <div style="margin-top:12px;">
+          <span class="chip">go_router</span>
+          <span class="chip">Riverpod</span>
+        </div>
+      </div>
+      <div class="card accent2">
+        <div class="card-label">BACKEND</div>
+        <div class="card-h">Firebase</div>
+        <p class="card-p">서버리스 BaaS. Auth, DB, Functions 일체화.</p>
+        <div style="margin-top:12px;">
+          <span class="chip">Firestore</span>
+          <span class="chip">FCM</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">EXTERNAL</div>
+        <div class="card-h">고용24 API</div>
+        <p class="card-p">공공 일자리 데이터. Cloud Functions 프록시.</p>
+        <div style="margin-top:12px;">
+          <span class="chip">XML→JSON</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">DEVOPS</div>
+        <div class="card-h">3-Platform Review</div>
+        <p class="card-p">Claude / Gemini / OpenCode 동시 리뷰.</p>
+        <div style="margin-top:12px;">
+          <span class="chip">Git Flow</span>
+          <span class="chip">CI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ARCHITECTURE -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>ARCHITECTURE</div>
+    <h2 class="slide-title">아키텍처 개요</h2>
+    <p class="slide-lead">Flutter - Firebase - 고용24 API 프록시 구조</p>
+    <div class="pipeline" style="grid-template-columns:repeat(4,1fr); margin-top:40px;">
+      <div class="pipe-step"><div class="num">01</div><div class="ttl">Flutter App</div><div class="des">UI/UX<br>Riverpod 상태관리</div></div>
+      <div class="pipe-step"><div class="num">02</div><div class="ttl">Firebase</div><div class="des">Auth / Firestore<br>Real-time 동기화</div></div>
+      <div class="pipe-step"><div class="num">03</div><div class="ttl">Cloud Functions</div><div class="des">API 키 보호<br>XML→JSON 변환</div></div>
+      <div class="pipe-step"><div class="num">04</div><div class="ttl">고용24 API</div><div class="des">공공 일자리 데이터<br>일 10만회 제한</div></div>
+    </div>
+    <div class="flow" style="margin-top:40px;">
+      <div class="flow-row"><span class="src">Flutter App</span><span class="arr">→</span><span class="dst">Firebase Auth (Phone OTP)</span><span class="note">인증 상태 관리</span></div>
+      <div class="flow-row"><span class="src">Flutter App</span><span class="arr">→</span><span class="dst">Cloud Firestore (jobs / users / applications)</span><span class="note">오프라인 지원</span></div>
+      <div class="flow-row"><span class="src">Cloud Functions</span><span class="arr">→</span><span class="dst">work24.go.kr Open API</span><span class="note">서버측 API 키 관리</span></div>
+    </div>
+  </section>
+
+  <!-- 5. AUTH - PHONE -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>AUTH FLOW</div>
+    <h2 class="slide-title">전화번호 입력</h2>
+    <p class="slide-lead">Firebase Phone Auth로 별도 비밀번호 없이 SMS 인증</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">로그인 플로우</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>010 시작 11자리 유효성 검사</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>E.164 포맷 변환 (+82)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>오류 시 SnackBar 피드백</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>Android 백버튼 → 앱 종료 (PopScope)</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content white-bg" style="padding-top:48px;">
+            <div class="ph-headline" style="font-size:16px;">휴대폰 번호로<br>시작하세요</div>
+            <div style="margin-top:24px; display:flex; gap:8px;">
+              <div style="padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; font-weight:700; color:var(--text-faint); font-size:13px;">+82</div>
+              <input class="ph-input" style="flex:1; margin:0;" placeholder="01012345678">
+            </div>
+            <div style="margin-top:auto; padding-bottom:24px;">
+              <button class="ph-btn">인증번호 받기</button>
+              <p style="text-align:center; margin-top:12px; font-size:11px; color:var(--text-faint);">가입과 로그인에 모두 사용됩니다</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. AUTH - OTP -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>AUTH FLOW</div>
+    <h2 class="slide-title">OTP 인증</h2>
+    <p class="slide-lead">6자리 인증번호 입력 및 자동 진행</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">6자리 PIN 입력</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>개별 입력 필드 (OtpPinBox)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>붙여넣기 지원 (paste)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>백스페이스 시 이전 칸 이동</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>60초 카운트다운 후 재발송</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar" style="justify-content:space-between;"><span>←</span><span></span></div>
+          <div class="phone-content white-bg" style="padding-top:16px;">
+            <div class="ph-title" style="font-size:15px;">인증번호 6자리를<br>입력하세요</div>
+            <div class="ph-otp">
+              <div class="ph-otp-box filled">1</div>
+              <div class="ph-otp-box filled">2</div>
+              <div class="ph-otp-box filled">3</div>
+              <div class="ph-otp-box">4</div>
+              <div class="ph-otp-box">5</div>
+              <div class="ph-otp-box">6</div>
+            </div>
+            <p style="text-align:center; font-size:12px; color:var(--text-faint);">45초 후 재발송 가능</p>
+            <div style="margin-top:auto; padding-bottom:24px;">
+              <button class="ph-btn">확인</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. AUTH - PROFILE -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>AUTH FLOW</div>
+    <h2 class="slide-title">프로필 등록</h2>
+    <p class="slide-lead">맞춤 공고 추천을 위한 최초 프로필 설정</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">프로필 설정</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>시/도 → 구/군 2단계 선택</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>경력 소개 선택 (최대 500자)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>필수 입력 완료 시 버튼 활성화</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>Firestore /users 컬렉션 저장</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content white-bg" style="padding-top:32px;">
+            <div class="ph-headline" style="font-size:16px;">프로필을<br>등록해 주세요</div>
+            <p class="ph-caption">일자리 추천에 사용됩니다.</p>
+            <div style="margin-top:20px;">
+              <div class="ph-body" style="font-weight:700; margin-bottom:4px;">이름</div>
+              <input class="ph-input" placeholder="이름을 입력하세요">
+              <div class="ph-body" style="font-weight:700; margin-bottom:4px;">거주 지역</div>
+              <select class="ph-input"><option>시 / 도 선택</option></select>
+              <select class="ph-input"><option>구 / 군 선택</option></select>
+              <div class="ph-body" style="font-weight:700; margin-bottom:4px;">경력 소개 (선택)</div>
+              <textarea class="ph-input" style="min-height:60px;" placeholder="간단한 경력을 소개해 주세요"></textarea>
+              <button class="ph-btn" style="margin-top:8px;">시작하기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. JOB LIST -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>MAIN FLOW</div>
+    <h2 class="slide-title">공고 목록</h2>
+    <p class="slide-lead">지역/직종 필터와 세이프티 배지로 안전한 일자리 탐색</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">필터 & 카드</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>FilterBar: 지역(시/구) + 직종 칩</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>JobCard: 제목/회사/급여/마감/강도</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>로딩: Skeleton UI</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>빈 결과: 필터 초기화 유도</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar">은빛일자리</div>
+          <div class="phone-content" style="padding:8px 0;">
+            <div style="padding:0 12px 6px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                <span class="ph-caption" style="width:30px;">지역</span>
+                <span class="ph-chip primary">종로구</span>
+                <span class="ph-chip">중구</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="ph-caption" style="width:30px;">직종</span>
+                <span class="ph-chip primary">전체</span>
+                <span class="ph-chip">경비</span>
+              </div>
+            </div>
+            <div class="ph-card" style="margin:0 8px 6px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span class="ph-title" style="flex:1;">아파트 경비원 모집</span>
+                <span class="ph-price">월 250만</span>
+              </div>
+              <div class="ph-caption">종로구청</div>
+              <div style="margin-top:6px; display:flex; justify-content:space-between;">
+                <span class="ph-chip">정규직</span>
+                <div style="display:flex; gap:6px;">
+                  <span class="ph-caption">D-3</span>
+                  <span class="ph-badge light">● 가벼움</span>
+                </div>
+              </div>
+            </div>
+            <div class="ph-card" style="margin:0 8px 6px;">
+              <div style="display:flex; justify-content:space-between;">
+                <span class="ph-title" style="flex:1;">사무실 청소 담당</span>
+                <span class="ph-price">시 12,000원</span>
+              </div>
+              <div class="ph-caption">중구청</div>
+              <div style="margin-top:6px; display:flex; justify-content:space-between;">
+                <span class="ph-chip">단기</span>
+                <div style="display:flex; gap:6px;">
+                  <span class="ph-caption">D-1</span>
+                  <span class="ph-badge moderate">● 보통</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-bottom-nav">
+            <span class="nav-item active">홈</span>
+            <span class="nav-item">지원현황</span>
+            <span class="nav-item">마이페이지</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. JOB DETAIL -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>MAIN FLOW</div>
+    <h2 class="slide-title">공고 상세</h2>
+    <p class="slide-lead">세이프티 큐레이션으로 신체 부담 정도를 한눈에</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">Safety Curation</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>근무 조건 테이블 (급여, 시간, 요일 등)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>신체 강도 3단계 (가벼움/보통/무거움)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>physicalBadges 6종 세분화</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>하단 고정 "지원하기" 버튼</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar">공고 상세</div>
+          <div class="phone-content" style="padding-bottom:56px;">
+            <div class="ph-headline" style="font-size:15px;">아파트 경비원 모집</div>
+            <div class="ph-caption">종로구청</div>
+            <div class="ph-price" style="margin-top:4px;">월 2,500,000원</div>
+            <div class="ph-safety" style="margin-top:10px;">
+              <div class="ph-safety-title">세이프티 큐레이션</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <span class="ph-badge light">● 가벼움</span>
+                <span class="ph-chip">장시간 서 있음</span>
+                <span class="ph-chip">가벼운 이동</span>
+              </div>
+            </div>
+            <div class="ph-section">근무 조건</div>
+            <div class="ph-row"><span class="ph-label">근무지</span><span class="ph-value">서울 종로구</span></div>
+            <div class="ph-row"><span class="ph-label">급여</span><span class="ph-value">월 2,500,000원</span></div>
+            <div class="ph-row"><span class="ph-label">근무시간</span><span class="ph-value">09:00 ~ 18:00</span></div>
+            <div class="ph-section">자격 요건</div>
+            <p class="ph-body">60세 이상, 신체 건강하신 분</p>
+          </div>
+          <div style="position:absolute; bottom:0; left:0; right:0; padding:8px 12px; background:var(--surface); border-top:1px solid var(--border);">
+            <button class="ph-btn">지원하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. APPLICATION FORM -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>MAIN FLOW</div>
+    <h2 class="slide-title">지원하기</h2>
+    <p class="slide-lead">간단한 자기소개와 함께 공고 지원</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">지원서 작성</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>사전 지원 여부 체크 (hasApplied)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>중복 지원 방지 (runTransaction)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>자기소개 선택 입력 (최대 200자)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>오터치 방지 (_isSubmitting)</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar">지원서 작성</div>
+          <div class="phone-content" style="padding-bottom:56px;">
+            <div class="ph-card" style="margin:-14px -14px 10px; border-radius:0;">
+              <div class="ph-title">아파트 경비원 모집</div>
+              <div class="ph-caption">종로구청</div>
+            </div>
+            <div class="ph-section">자기소개</div>
+            <textarea class="ph-input" style="min-height:80px;" placeholder="간단한 자기소개를 작성해 주세요 (선택)"></textarea>
+          </div>
+          <div style="position:absolute; bottom:0; left:0; right:0; padding:8px 12px; background:var(--surface); border-top:1px solid var(--border);">
+            <button class="ph-btn">지원하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. APPLICATION RESULT -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>MAIN FLOW</div>
+    <h2 class="slide-title">지원 완료</h2>
+    <p class="slide-lead">지원 완료 후 마이페이지에서 현황 확인</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">완료 화면</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>성공 아이콘 + 메시지</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>지원한 공고 정보 노출</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>홈으로 이동</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-content white-bg" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+            <div style="width:56px; height:56px; background:var(--green); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px; margin-bottom:20px;">✓</div>
+            <div class="ph-headline" style="font-size:16px;">지원이<br>완료되었습니다!</div>
+            <div class="ph-body" style="margin-top:12px;">아파트 경비원 모집</div>
+            <div class="ph-caption">종로구청</div>
+            <div class="ph-caption" style="margin-top:8px;">마이페이지에서 지원 현황을 확인하세요</div>
+            <button class="ph-btn" style="margin-top:24px;">확인</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. MY PAGE -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>MY PAGE</div>
+    <h2 class="slide-title">마이페이지</h2>
+    <p class="slide-lead">프로필 요약, 지원 내역, 설정 관리</p>
+    <div class="bento cols-2">
+      <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">FEATURES</div>
+        <div class="card-h">내 정보 관리</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>프로필 요약 카드 (이름/주소/경력)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>총 지원 횟수 뱃지</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>지원 내역 조회 (상태별 색상)</li>
+          <li style="padding:8px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:16px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>로그아웃 확인 다이얼로그</li>
+        </ul>
+      </div>
+      <div class="card" style="display:flex; align-items:center; justify-content:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-appbar">마이페이지</div>
+          <div class="phone-content">
+            <div class="ph-card">
+              <div class="ph-title">김철수</div>
+              <div class="ph-caption">서울 종로구</div>
+              <div class="ph-body" style="margin-top:2px; font-size:11px;">10년 경비 경력</div>
+              <div style="margin-top:8px;">
+                <span style="display:inline-block; padding:4px 10px; background:rgba(21,101,192,0.08); color:var(--accent); border-radius:20px; font-weight:700; font-size:11px;">총 3건 지원</span>
+              </div>
+            </div>
+            <div class="ph-card" style="padding:0; overflow:hidden;">
+              <div style="padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="ph-body">찜한 공고</span>
+                <span style="color:var(--text-faint);">›</span>
+              </div>
+              <div style="height:1px; background:var(--border); margin:0 12px;"></div>
+              <div style="padding:12px 14px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="ph-body">알림 설정</span>
+                <span style="color:var(--text-faint);">›</span>
+              </div>
+            </div>
+            <div style="text-align:center; margin-top:12px;">
+              <span style="color:var(--red); font-size:12px;">로그아웃</span>
+            </div>
+          </div>
+          <div class="phone-bottom-nav">
+            <span class="nav-item">홈</span>
+            <span class="nav-item">지원현황</span>
+            <span class="nav-item active">마이페이지</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. DEV PROCESS -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>PROCESS</div>
+    <h2 class="slide-title">개발 프로세스 & 협업</h2>
+    <p class="slide-lead">9개 PR, 3라운드 리뷰, 97개 테스트 통과</p>
+    <div class="bento cols-2">
+      <div class="card">
+        <div class="card-label">GIT FLOW</div>
+        <div class="card-h">브랜치 전략</div>
+        <div class="flow" style="margin-top:12px;">
+          <div class="flow-row"><span class="src">feature/spec-04</span><span class="arr">→</span><span class="dst">PR 생성</span></div>
+          <div class="flow-row"><span class="src">PR</span><span class="arr">→</span><span class="dst">verify_local.sh 통과</span></div>
+          <div class="flow-row"><span class="src">Review</span><span class="arr">→</span><span class="dst">Claude + Gemini 승인</span></div>
+          <div class="flow-row"><span class="src">Merge</span><span class="arr">→</span><span class="dst">master 직접 푸시</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">QUALITY</div>
+        <div class="card-h">품질 기준</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+          <div style="text-align:center;"><div class="stat-num">97</div><div class="stat-cap">테스트 통과</div></div>
+          <div style="text-align:center;"><div class="stat-num">0</div><div class="stat-cap">analyze warning</div></div>
+          <div style="text-align:center;"><div class="stat-num">9</div><div class="stat-cap">PR</div></div>
+          <div style="text-align:center;"><div class="stat-num">3</div><div class="stat-cap">라운드 리뷰</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:18px;" class="bento cols-3">
+      <div class="agent imp">
+        <div class="agent-name">▎IMPLEMENTER</div>
+        <div class="agent-h">OpenCode</div>
+        <p class="card-p">코드 구현 및 단위 테스트 작성</p>
+        <div class="agent-tools"><span class="chip">Sisyphus</span><span class="chip">Riverpod</span></div>
+      </div>
+      <div class="agent rev1">
+        <div class="agent-name">▎REVIEWER B</div>
+        <div class="agent-h">Gemini</div>
+        <p class="card-p">아키텍처 및 보안 리뷰</p>
+        <div class="agent-tools"><span class="chip">Security</span><span class="chip">Performance</span></div>
+      </div>
+      <div class="agent rev2">
+        <div class="agent-name">▎REVIEWER A</div>
+        <div class="agent-h">Claude</div>
+        <p class="card-p">코드 품질 및 UX 상세 리뷰</p>
+        <div class="agent-tools"><span class="chip">UX</span><span class="chip">Refactor</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14. RETROSPECTIVE -->
+  <section class="slide">
+    <div class="slide-eyebrow"><span class="dot"></span>RETROSPECTIVE</div>
+    <h2 class="slide-title">회고 & 느낀점</h2>
+    <p class="slide-lead">2주 MVP 스프린트를 마치며</p>
+    <div class="bento cols-3">
+      <div class="card feature">
+        <div class="card-label">GOOD</div>
+        <div class="card-h">잘한 점</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--green); opacity:.6;"></span>spec 기반 개발로 방향성 일치</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--green); opacity:.6;"></span>3플랫폼 리뷰로 다양한 관점 확보</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--green); opacity:.6;"></span>Firebase BaaS로 백엔드 부담 최소화</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-label">BAD</div>
+        <div class="card-h">아쉬운 점</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--orange); opacity:.6;"></span>고용24 API 키 미발급 → Mock 데이터</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--orange); opacity:.6;"></span>시니어 실 사용자 테스트 부재</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--orange); opacity:.6;"></span>AI 추천 기능은 MVP 범위 외</li>
+        </ul>
+      </div>
+      <div class="card accent2">
+        <div class="card-label">NEXT</div>
+        <div class="card-h">다음 단계</div>
+        <ul style="list-style:none; margin-top:12px;">
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>고용24 API 실 연동</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>푸시 알림 (FCM) 구현</li>
+          <li style="padding:6px 0; padding-left:18px; position:relative; color:var(--text-dim);"><span style="position:absolute; left:0; top:14px; width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.4;"></span>시니어 대상 UX 리서치</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15. CLOSING -->
+  <section class="slide closing">
+    <div class="cover-tag"><span class="live-dot"></span>END · 2026.05</div>
+    <h1><span class="grad-text-silver">감사합니다</span></h1>
+    <p>SilverWorker 팀</p>
+    <div class="signature">스터디 팀 내부 회고 · 2026.05</div>
+  </section>
+
+</div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn" onclick="navigate(-1)" aria-label="prev">‹</button>
+  <span class="nav-page"><strong id="curPage">1</strong> / <span id="totalPage">—</span></span>
+  <button class="nav-btn" onclick="navigate(1)" aria-label="next">›</button>
+  <div class="nav-dots" id="dots"></div>
+</div>
+
+<script>
+  const SLIDE_W=1920, SLIDE_MIN_H=1080;
+  const root=document.documentElement, container=document.getElementById('slides');
+  function fitStage(){
+    const all=document.querySelectorAll('.slide');
+    let h=SLIDE_MIN_H;
+    all.forEach(s=>{ if(s.scrollHeight>h) h=s.scrollHeight; });
+    container.style.setProperty('--canvas-h',h+'px');
+    root.style.setProperty('--scale', Math.min(window.innerWidth/SLIDE_W, window.innerHeight/h));
+  }
+  window.addEventListener('resize',fitStage);
+  const slides=document.querySelectorAll('.slide'), total=slides.length;
+  const curPage=document.getElementById('curPage'), totalPage=document.getElementById('totalPage'), dotsWrap=document.getElementById('dots');
+  let idx=0;
+  totalPage.textContent=total;
+  for(let i=0;i<total;i++){ const d=document.createElement('button'); d.className='nav-dot'+(i===0?' active':''); d.onclick=()=>go(i); dotsWrap.appendChild(d); }
+  const dots=document.querySelectorAll('.nav-dot');
+  function render(){ slides.forEach((s,i)=>s.classList.toggle('active',i===idx)); dots.forEach((d,i)=>d.classList.toggle('active',i===idx)); curPage.textContent=idx+1; fitStage(); }
+  fitStage(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitStage);
+  function go(i){ if(i<0||i>=total) return; idx=i; render(); }
+  function navigate(d){ go(idx+d); }
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){ e.preventDefault(); navigate(1); }
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); navigate(-1); }
+    else if(e.key==='Home'){ e.preventDefault(); go(0); }
+    else if(e.key==='End'){ e.preventDefault(); go(total-1); }
+  });
+  let tx=0;
+  document.addEventListener('touchstart',e=>{ tx=e.changedTouches[0].screenX; });
+  document.addEventListener('touchend',e=>{ const diff=tx-e.changedTouches[0].screenX; if(Math.abs(diff)>50) navigate(diff>0?1:-1); });
+  let wt;
+  document.addEventListener('wheel',e=>{ if(wt) return; wt=setTimeout(()=>wt=null,700); if(Math.abs(e.deltaY)>30) navigate(e.deltaY>0?1:-1); },{passive:true});
+</script>
+</body>
+</html>
