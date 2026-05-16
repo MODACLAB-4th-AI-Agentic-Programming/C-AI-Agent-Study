@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyLog — 제품 발표</title>
+  <style>
+    :root {
+      --head:       #8B5CF6;
+      --eyes:       #06B6D4;
+      --shoulder:   #F59E0B;
+      --heart:      #EF4444;
+      --liver:      #D97706;
+      --stomach:    #10B981;
+      --intestine:  #059669;
+      --knee:       #3B82F6;
+      --spine:      #6366F1;
+      --skin:       #F472B6;
+      --primary:    #2563EB;
+      --text:       #1A1A1A;
+      --text-sub:   #6B7280;
+      --text-mute:  #9CA3AF;
+      --badge:      #F3F4F6;
+      --border:     #E5E5E5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+      background: #000;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      user-select: none;
+    }
+
+    /* ── Layout ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 52px 64px;
+      background: #fff;
+    }
+    .slide.active { display: flex; }
+
+    .slide-dark  { background: #0F172A; }
+    .slide-blue  { background: #EFF6FF; }
+
+    /* ── Common typography ── */
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      opacity: 0.65;
+    }
+    .title {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin-bottom: 40px;
+    }
+
+    /* ── Phone mockup ── */
+    .phone {
+      width: 182px;
+      height: 394px;
+      background: #fff;
+      border-radius: 28px;
+      border: 2.5px solid #2a2a2a;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-nav {
+      height: 30px;
+      background: #F8F8F8;
+      border-bottom: 1px solid #E5E5E5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      color: #1A1A1A;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .phone-nav .back { position: absolute; left: 8px; color: #2563EB; font-size: 7px; }
+    .phone-nav .right { position: absolute; right: 8px; color: #2563EB; font-size: 7px; }
+    .phone-tabs {
+      height: 30px;
+      background: #fff;
+      border-top: 1px solid #E5E5E5;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 6px;
+      color: #9CA3AF;
+      flex-shrink: 0;
+    }
+    .tab-on { color: #2563EB; }
+
+    /* ── Chip ── */
+    .chip {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 6px;
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+    .chip-on { background: #2563EB; color: #fff; }
+
+    /* ── Step dots ── */
+    .step-dots { display: flex; gap: 4px; justify-content: center; padding: 5px 0 3px; }
+    .step-dot { width: 5px; height: 5px; border-radius: 50%; background: #E5E5E5; }
+    .step-dot.on  { background: #2563EB; }
+    .step-dot.cur { width: 12px; border-radius: 4px; background: #2563EB; }
+
+    /* ── Mini button ── */
+    .mini-btn {
+      background: #2563EB;
+      color: #fff;
+      border-radius: 7px;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    /* ── Body color dots (cover / closing) ── */
+    .body-dots { display: flex; gap: 10px; justify-content: center; }
+    .bdot { width: 14px; height: 14px; border-radius: 50%; }
+
+    /* ── Phones row ── */
+    .phones-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 28px;
+    }
+    .phone-label {
+      text-align: center;
+      margin-top: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+    .flow-arrow { font-size: 26px; color: #CBD5E1; margin-top: 150px; flex-shrink: 0; }
+
+    /* ── Problem cards ── */
+    .prob-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      width: 100%;
+      max-width: 920px;
+      margin-top: 36px;
+    }
+    .prob-card {
+      background: #FFF5F5;
+      border: 1px solid #FEE2E2;
+      border-radius: 18px;
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .prob-icon { font-size: 38px; margin-bottom: 14px; }
+    .prob-ttl  { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .prob-desc { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+
+    /* ── Cycle ── */
+    .cycle-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-top: 42px;
+    }
+    .cycle-step { display: flex; flex-direction: column; align-items: center; width: 116px; }
+    .cycle-icon {
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    .cycle-lbl { font-size: 13px; font-weight: 700; text-align: center; }
+    .cycle-sub { font-size: 10px; color: var(--text-sub); text-align: center; margin-top: 3px; }
+    .cycle-arr { font-size: 22px; color: #CBD5E1; margin-bottom: 20px; flex-shrink: 0; }
+
+    /* ── Info panel ── */
+    .info-panel { background: #F8FAFF; border-left: 4px solid var(--primary); border-radius: 0 12px 12px 0; padding: 20px 22px; }
+    .info-item  { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 14px; }
+    .info-dot   { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .info-text  { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+    /* ── Tech grid ── */
+    .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; width: 100%; max-width: 820px; }
+    .tech-card { border-radius: 16px; padding: 26px; text-align: left; }
+    .tech-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+    .tech-item { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; font-size: 14px; }
+
+    /* ── Stats ── */
+    .stats-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+    .stat-box {
+      background: #F8FAFF; border: 1px solid #DBEAFE; border-radius: 14px;
+      padding: 16px 22px; text-align: center; min-width: 110px;
+    }
+    .stat-num { font-size: 30px; font-weight: 900; color: var(--primary); }
+    .stat-lbl { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+
+    /* ── Seg control ── */
+    .seg { display: flex; background: #F3F4F6; border-radius: 7px; padding: 2px; margin: 4px 7px 3px; }
+    .seg-btn { flex: 1; text-align: center; padding: 3px 0; border-radius: 5px; font-size: 6px; color: #9CA3AF; }
+    .seg-btn.on { background: #fff; color: #1A1A1A; font-weight: 700; }
+
+    /* ── Mini slider ── */
+    .slider-track { height: 4px; background: #E5E5E5; border-radius: 2px; position: relative; margin: 5px 0 2px; }
+    .slider-fill  { height: 100%; border-radius: 2px; position: absolute; left: 0; }
+    .slider-thumb { width: 10px; height: 10px; border-radius: 50%; position: absolute; top: -3px; }
+
+    /* ── Nav diagram ── */
+    .nav-diag {
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 2;
+      background: #F8FAFF;
+      border: 1px solid #DBEAFE;
+      border-radius: 16px;
+      padding: 28px 32px;
+      min-width: 340px;
+    }
+
+    /* ── Progress / hint ── */
+    #progress {
+      position: fixed; bottom: 22px; right: 28px;
+      color: rgba(255,255,255,0.45); font-size: 12px; z-index: 200;
+    }
+    .nav-hint {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.3); font-size: 11px; z-index: 200;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     Slide 1 — 표지
+════════════════════════════════════════ -->
+<div class="slide slide-dark active">
+  <div style="text-align:center; max-width:680px;">
+    <div style="color:#64748B; font-size:12px; letter-spacing:3px; text-transform:uppercase; margin-bottom:22px;">Quick Corp · 2026.05.11</div>
+    <h1 style="font-size:80px; font-weight:900; color:#fff; line-height:1; margin-bottom:18px; letter-spacing:-3px;">BodyLog</h1>
+    <p style="font-size:22px; color:#94A3B8; line-height:1.6; margin-bottom:40px;">당신의 건강 증상,<br>체계적으로 기록하고 추적하세요</p>
+    <div class="body-dots" style="margin-bottom:40px;">
+      <span class="bdot" style="background:var(--head)"></span>
+      <span class="bdot" style="background:var(--eyes)"></span>
+      <span class="bdot" style="background:var(--shoulder)"></span>
+      <span class="bdot" style="background:var(--heart)"></span>
+      <span class="bdot" style="background:var(--liver)"></span>
+      <span class="bdot" style="background:var(--stomach)"></span>
+      <span class="bdot" style="background:var(--intestine)"></span>
+      <span class="bdot" style="background:var(--knee)"></span>
+      <span class="bdot" style="background:var(--spine)"></span>
+      <span class="bdot" style="background:var(--skin)"></span>
+    </div>
+    <p style="color:#475569; font-size:14px;">제품 시제품 발표 · CTO 발표자료</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 2 — 문제 정의
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center; width:100%; max-width:940px;">
+    <div class="tag" style="color:#EF4444;">문제 정의</div>
+    <h2 class="title">건강 증상 관리, 지금 어떻게 하고 계신가요?</h2>
+    <p class="subtitle" style="margin-bottom:0;">대부분의 사람들은 증상을 "기억"에만 의존합니다</p>
+
+    <div class="prob-grid">
+      <div class="prob-card">
+        <div class="prob-icon">📝</div>
+        <div class="prob-ttl">파편화된 기록</div>
+        <div class="prob-desc">메모앱, 캘린더, 수첩… 여러 곳에 흩어진 기록. 나중에 찾을 수 없습니다.</div>
+      </div>
+      <div class="prob-card">
+        <div class="prob-icon">🔍</div>
+        <div class="prob-ttl">치료 효과 추적 불가</div>
+        <div class="prob-desc">"도수치료가 효과가 있었나?" 기억이 흐릿해 재발 시 같은 실수를 반복합니다.</div>
+      </div>
+      <div class="prob-card">
+        <div class="prob-icon">🔗</div>
+        <div class="prob-ttl">원인-결과 연결 없음</div>
+        <div class="prob-desc">증상의 원인과 치료 결과가 연결되지 않아 패턴을 파악할 수 없습니다.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:36px; padding:18px 32px; background:#FFF5F5; border-radius:14px; font-size:16px; color:#B91C1C; font-weight:600; display:inline-block; border:1px solid #FEE2E2;">
+      💬 "작년에도 이 두통약 먹었는데… 효과가 있었나, 없었나?"
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 3 — 솔루션 (3-Phase 비동기 사이클)
+════════════════════════════════════════ -->
+<div class="slide slide-blue">
+  <div style="text-align:center; width:100%; max-width:980px;">
+    <div class="tag" style="color:var(--primary);">솔루션</div>
+    <h2 class="title">3-Phase 비동기 사이클</h2>
+    <p class="subtitle" style="margin-bottom:0;">즉시 입력 → 일상 중 비동기 추적 → 조건 충족 후 결과 평가</p>
+
+    <div style="display:flex; align-items:flex-start; justify-content:center; gap:0; width:100%; margin-top:28px;">
+
+      <!-- Phase 1 -->
+      <div style="flex:1; background:#EFF6FF; border-radius:16px; padding:20px 14px; margin:0 5px;">
+        <div style="font-size:10px; font-weight:700; color:#1D4ED8; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; text-align:center; background:#DBEAFE; border-radius:20px; padding:4px 0;">Phase 1 · 즉시 입력</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">🤒 S9 부위 선택</div>
+          <div style="text-align:center; color:#CBD5E1; font-size:13px; line-height:1;">↓</div>
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">📝 S10 상세 입력</div>
+          <div style="text-align:center; color:#CBD5E1; font-size:13px; line-height:1;">↓</div>
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">🔍 S11 원인 기록</div>
+          <div style="text-align:center; color:#CBD5E1; font-size:13px; line-height:1;">↓</div>
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">📋 S12 계획 수립</div>
+          <div style="text-align:center; color:#CBD5E1; font-size:13px; line-height:1;">↓</div>
+          <div style="background:#DBEAFE; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:700; text-align:center; color:#1D4ED8;">✅ S12a 사이클 시작</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; font-size:24px; color:#CBD5E1; padding:0 3px; margin-top:90px;">→</div>
+
+      <!-- Phase 2 -->
+      <div style="flex:1; background:#F0FDF4; border-radius:16px; padding:20px 14px; margin:0 5px;">
+        <div style="font-size:10px; font-weight:700; color:#166534; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; text-align:center; background:#DCFCE7; border-radius:20px; padding:4px 0;">Phase 2 · 비동기</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">🔔 S13 행동 기록<div style="font-size:9px; color:#6B7280; font-weight:400; margin-top:1px;">리마인더 딥링크</div></div>
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">📊 S17 일일 체크인<div style="font-size:9px; color:#6B7280; font-weight:400; margin-top:1px;">일일 알림 딥링크</div></div>
+          <div style="background:#DCFCE7; border-radius:7px; padding:7px 10px; font-size:11px; text-align:center; color:#166534; line-height:1.4;">S1 진행 중인 사이클 카드<br>→ S13 또는 S17 진입</div>
+        </div>
+        <div style="margin-top:10px; font-size:9px; color:#6B7280; text-align:center;">일상 중 반복 진행</div>
+      </div>
+
+      <div style="display:flex; align-items:center; font-size:24px; color:#CBD5E1; padding:0 3px; margin-top:90px;">→</div>
+
+      <!-- Phase 3 -->
+      <div style="flex:1; background:#FFF7ED; border-radius:16px; padding:20px 14px; margin:0 5px;">
+        <div style="font-size:10px; font-weight:700; color:#9A3412; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; text-align:center; background:#FED7AA; border-radius:20px; padding:4px 0;">Phase 3 · 3일↑ 후</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="background:#fff; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:600; text-align:center; color:#1A1A1A;">📊 S14 결과 추적<div style="font-size:9px; color:#6B7280; font-weight:400; margin-top:1px;">일일 추이 기반 비교</div></div>
+          <div style="text-align:center; color:#CBD5E1; font-size:13px; line-height:1;">↓</div>
+          <div style="background:#FED7AA; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:700; text-align:center; color:#9A3412;">🏁 S15 사이클 완료</div>
+        </div>
+        <div style="margin-top:10px; font-size:9px; color:#6B7280; text-align:center;">사용자가 명시적 종료 선택</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:18px; display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+      <div style="background:#fff; border-radius:12px; padding:10px 18px; font-size:13px; color:#7C3AED; font-weight:600; box-shadow:0 2px 12px rgba(124,58,237,0.12);">
+        🔄 효과 없음 → Flow 11: S14 → S12 → S12a → Phase 2 재진입
+      </div>
+      <div style="background:#fff; border-radius:12px; padding:10px 18px; font-size:13px; color:#059669; font-weight:600; box-shadow:0 2px 12px rgba(16,185,129,0.12);">
+        📈 완료 시 효과적 행동 자동 요약 (S15)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 4 — Body Map (S1)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="display:flex; align-items:center; gap:56px; width:100%; max-width:960px;">
+
+    <!-- Left: description -->
+    <div style="flex:1;">
+      <div class="tag" style="color:var(--head);">핵심 화면 · S1</div>
+      <h2 class="title" style="font-size:38px;">Body Map</h2>
+      <p style="font-size:15px; color:var(--text-sub); line-height:1.7; margin-bottom:28px;">
+        인체 실루엣 위에 신체 부위를 탭하여<br>해당 부위의 기록에 빠르게 접근합니다
+      </p>
+      <div class="info-panel">
+        <div class="info-item">
+          <div class="info-dot" style="background:var(--head);"></div>
+          <div class="info-text">장기별 <strong>컬러 토큰</strong>으로 직관적 구분</div>
+        </div>
+        <div class="info-item">
+          <div class="info-dot" style="background:var(--primary);"></div>
+          <div class="info-text">전면/후면 <strong>Segmented Control</strong> 전환</div>
+        </div>
+        <div class="info-item">
+          <div class="info-dot" style="background:var(--heart);"></div>
+          <div class="info-text"><strong>기록 있는 장기</strong>에 빨간 점 표시</div>
+        </div>
+        <div class="info-item">
+          <div class="info-dot" style="background:var(--skin);"></div>
+          <div class="info-text">피부(전신)는 <strong>별도 카드</strong>로 표시</div>
+        </div>
+        <div class="info-item" style="margin-bottom:0;">
+          <div class="info-dot" style="background:#DBEAFE; border:1px solid #3B82F6;"></div>
+          <div class="info-text">Body Map 하단 <strong>진행 중인 사이클 카드</strong> 섹션 (사이클 없으면 숨김)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: S1 phone -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="phone" style="width:200px; height:432px;">
+        <div class="phone-nav" style="height:32px;">
+          BodyLog <span class="right">👤</span>
+        </div>
+        <!-- Seg control -->
+        <div class="seg" style="margin:5px 9px 3px;">
+          <div class="seg-btn on">전면 보기</div>
+          <div class="seg-btn">후면 보기</div>
+        </div>
+        <!-- Body silhouette -->
+        <div style="position:relative; height:246px; width:160px; margin:0 auto; flex-shrink:0;">
+          <!-- Silhouette shapes -->
+          <div style="position:absolute;left:45px;top:2px;width:70px;height:34px;background:#FAE8D5;border-radius:20px;"></div>
+          <div style="position:absolute;left:24px;top:36px;width:112px;height:130px;background:#FAE8D5;border-radius:8px;"></div>
+          <div style="position:absolute;left:27px;top:166px;width:44px;height:70px;background:#FAE8D5;border-radius:6px;"></div>
+          <div style="position:absolute;left:89px;top:166px;width:44px;height:70px;background:#FAE8D5;border-radius:6px;"></div>
+          <!-- Organ overlays -->
+          <div style="position:absolute;left:48px;top:6px;width:64px;height:22px;background:var(--head);border-radius:12px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">머리</div>
+          <div style="position:absolute;left:30px;top:40px;width:100px;height:18px;background:var(--shoulder);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">어깨·목</div>
+          <div style="position:absolute;left:26px;top:62px;width:46px;height:44px;background:var(--heart);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5px;color:#fff;font-weight:700;text-align:center;line-height:1.3;">심장·폐</div>
+          <div style="position:absolute;left:88px;top:62px;width:46px;height:44px;background:var(--liver);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5px;color:#fff;font-weight:700;text-align:center;line-height:1.3;">간·담낭</div>
+          <div style="position:absolute;left:46px;top:108px;width:68px;height:24px;background:var(--stomach);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">위</div>
+          <div style="position:absolute;left:30px;top:134px;width:100px;height:26px;background:var(--intestine);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">장</div>
+          <div style="position:absolute;left:29px;top:192px;width:38px;height:28px;background:var(--knee);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">무릎</div>
+          <div style="position:absolute;left:93px;top:192px;width:38px;height:28px;background:var(--knee);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">무릎</div>
+          <!-- Record dots (red) -->
+          <div style="position:absolute;left:84px;top:12px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+          <div style="position:absolute;left:45px;top:78px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+          <div style="position:absolute;left:82px;top:114px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+        </div>
+        <!-- Skin card -->
+        <div style="margin:4px 9px 0;background:#F3F4F6;border-radius:8px;padding:5px 9px;font-size:6.5px;display:flex;justify-content:space-between;align-items:center;border:1px solid #E5E5E5;flex-shrink:0;">
+          <span>🩹 피부 (전신)</span><span style="color:#9CA3AF;">›</span>
+        </div>
+        <!-- Active cycle card section -->
+        <div style="margin:4px 9px 0;font-size:5.5px;font-weight:700;color:#9CA3AF;letter-spacing:0.5px;flex-shrink:0;">진행 중인 사이클</div>
+        <div style="margin:2px 9px 0;background:#EFF6FF;border-radius:8px;padding:5px 8px;font-size:6px;border:1px solid #DBEAFE;flex-shrink:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+            <span style="font-weight:700;color:#1D4ED8;">어깨·목 — 목 디스크 통증</span>
+            <span style="color:#9CA3AF;">›</span>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;">
+            <span style="color:#6B7280;">3일째</span>
+            <span style="color:#DBEAFE;">|</span>
+            <span style="color:#F59E0B;font-weight:700;">강도 7→6</span>
+          </div>
+        </div>
+        <!-- FAB -->
+        <div style="position:absolute;bottom:34px;right:12px;width:28px;height:28px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;line-height:1;">+</div>
+        <div style="flex:1;"></div>
+        <div class="phone-tabs">
+          <span class="tab-on">🏠 홈</span>
+          <span>📋 타임</span>
+          <span>📊 요약</span>
+          <span>⚙️ 설정</span>
+        </div>
+      </div>
+      <div class="phone-label">S1 — 홈 (Body Map)</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 5 — 증상 입력 (S9 / S10)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center; margin-bottom:26px;">
+    <div class="tag" style="color:var(--shoulder);">증상 관리 사이클 · Step 1</div>
+    <h2 class="title" style="font-size:36px;">증상 입력</h2>
+    <p class="subtitle" style="margin-bottom:0;">신체 부위를 선택하고, 통증 강도와 유형을 기록합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S9 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">새 증상 기록 <span class="back">취소</span></div>
+        <div class="step-dots"><div class="step-dot cur"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <div style="text-align:center;font-size:9px;font-weight:700;margin:3px 0 2px;">어디가 불편하신가요?</div>
+        <div style="text-align:center;font-size:6px;color:#9CA3AF;margin-bottom:4px;">부위를 탭하면 선택됩니다</div>
+        <div class="seg" style="margin:2px 8px 3px;">
+          <div class="seg-btn on">전면</div><div class="seg-btn">후면</div>
+        </div>
+        <!-- Mini body -->
+        <div style="position:relative;height:186px;width:120px;margin:0 auto;flex-shrink:0;">
+          <div style="position:absolute;left:25px;top:2px;width:70px;height:28px;background:#FAE8D5;border-radius:16px;"></div>
+          <div style="position:absolute;left:10px;top:30px;width:100px;height:104px;background:#FAE8D5;border-radius:6px;"></div>
+          <div style="position:absolute;left:13px;top:134px;width:38px;height:48px;background:#FAE8D5;border-radius:4px;"></div>
+          <div style="position:absolute;left:69px;top:134px;width:38px;height:48px;background:#FAE8D5;border-radius:4px;"></div>
+          <!-- Organs -->
+          <div style="position:absolute;left:30px;top:5px;width:60px;height:18px;background:var(--head);border-radius:10px;opacity:.6;font-size:4.5px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">머리</div>
+          <!-- 어깨목 SELECTED -->
+          <div style="position:absolute;left:13px;top:33px;width:94px;height:16px;background:var(--shoulder);border-radius:4px;opacity:.9;border:1.5px solid var(--primary);font-size:5px;color:#1A1A1A;display:flex;align-items:center;justify-content:center;font-weight:700;">어깨·목 ✓</div>
+          <div style="position:absolute;left:12px;top:53px;width:44px;height:36px;background:var(--heart);border-radius:4px;opacity:.5;font-size:4px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;text-align:center;line-height:1.3;">심장·폐</div>
+          <div style="position:absolute;left:64px;top:53px;width:44px;height:36px;background:var(--liver);border-radius:4px;opacity:.5;font-size:4px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;text-align:center;line-height:1.3;">간·담낭</div>
+          <div style="position:absolute;left:28px;top:92px;width:64px;height:18px;background:var(--stomach);border-radius:4px;opacity:.5;font-size:4.5px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">위</div>
+          <div style="position:absolute;left:14px;top:112px;width:92px;height:18px;background:var(--intestine);border-radius:4px;opacity:.5;font-size:4.5px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">장</div>
+          <div style="position:absolute;left:15px;top:150px;width:33px;height:22px;background:var(--knee);border-radius:4px;opacity:.5;font-size:4.5px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">무릎</div>
+          <div style="position:absolute;left:72px;top:150px;width:33px;height:22px;background:var(--knee);border-radius:4px;opacity:.5;font-size:4.5px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">무릎</div>
+        </div>
+        <div style="margin:4px 8px;background:#EFF6FF;border:1px solid var(--primary);border-radius:12px;padding:3px 10px;font-size:6.5px;color:var(--primary);font-weight:700;text-align:center;">선택됨: 어깨·목</div>
+        <div style="flex:1;"></div>
+        <div style="padding:5px 8px;"><div class="mini-btn">다음</div></div>
+      </div>
+      <div class="phone-label">S9 — 부위 선택</div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- S10 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">새 증상 기록 <span class="back">&lt;</span></div>
+        <div class="step-dots"><div class="step-dot on"></div><div class="step-dot cur"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <div style="margin:3px 8px 4px;background:#EFF6FF;border-radius:10px;padding:2px 8px;font-size:6.5px;color:var(--primary);font-weight:700;display:inline-block;">어깨·목</div>
+        <!-- Name input -->
+        <div style="margin:4px 8px 2px;font-size:7px;font-weight:700;">증상 이름</div>
+        <div style="margin:0 8px 5px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:5px 7px;font-size:7px;">목 디스크 통증</div>
+        <!-- Intensity -->
+        <div style="margin:3px 8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:7px;font-weight:700;">통증 강도</span>
+          <span style="font-size:11px;font-weight:900;color:#EF4444;">7</span>
+        </div>
+        <div style="margin:2px 8px 5px;">
+          <div class="slider-track">
+            <div class="slider-fill" style="width:70%;background:#EF4444;"></div>
+            <div class="slider-thumb" style="left:calc(70% - 5px);background:#EF4444;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:5.5px;color:#9CA3AF;">
+            <span>1 가벼움</span><span>10 매우 심함</span>
+          </div>
+        </div>
+        <!-- Pain type chips -->
+        <div style="margin:2px 8px 2px;font-size:7px;font-weight:700;">통증 유형</div>
+        <div style="margin:2px 8px 5px;display:flex;flex-wrap:wrap;gap:3px;">
+          <span class="chip chip-on">쑤시는</span>
+          <span class="chip">찌르는</span>
+          <span class="chip chip-on">타는듯한</span>
+          <span class="chip">저린</span>
+          <span class="chip chip-on">뻐근한</span>
+          <span class="chip">욱신거리는</span>
+        </div>
+        <!-- Start date -->
+        <div style="margin:2px 8px 2px;font-size:7px;font-weight:700;">증상 시작일</div>
+        <div style="margin:0 8px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:4px 7px;font-size:7px;">📅 2026-05-11</div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #E5E5E5;padding:6px 8px;background:#fff;">
+          <div class="mini-btn">다음 — 원인 기록</div>
+        </div>
+      </div>
+      <div class="phone-label">S10 — 상세 입력</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 6 — 원인 & 계획 (S11 / S12)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;margin-bottom:26px;">
+    <div class="tag" style="color:var(--spine);">증상 관리 사이클 · Step 2~3</div>
+    <h2 class="title" style="font-size:36px;">원인 기록 & 계획 수립</h2>
+    <p class="subtitle" style="margin-bottom:0;">무엇이 원인인지 파악하고, 어떻게 해결할지 계획합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S11 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">원인 기록 <span class="back">&lt;</span></div>
+        <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div><div class="step-dot cur"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <div style="text-align:center;font-size:9px;font-weight:700;margin:4px 0 2px;">어떤 이유로 불편해졌나요?</div>
+        <div style="text-align:center;font-size:6px;color:#9CA3AF;margin-bottom:6px;">건너뛰어도 됩니다</div>
+        <!-- Accordion: 생활습관 open -->
+        <div style="margin:0 8px 3px;background:#F3F4F6;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;font-size:7px;font-weight:700;">
+          <span>🏃 생활습관</span><span style="color:#9CA3AF;">▲</span>
+        </div>
+        <div style="margin:0 8px 4px;padding:3px 8px;display:flex;flex-wrap:wrap;gap:3px;">
+          <span class="chip">과로</span>
+          <span class="chip chip-on">수면 부족</span>
+          <span class="chip chip-on">잘못된 자세</span>
+          <span class="chip">운동 부족</span>
+        </div>
+        <!-- Accordion: 외부요인 closed -->
+        <div style="margin:0 8px 3px;background:#F3F4F6;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;font-size:7px;font-weight:700;">
+          <span>🌦 외부요인</span><span style="color:#9CA3AF;">▼</span>
+        </div>
+        <!-- Accordion: 기저질환 closed -->
+        <div style="margin:0 8px 3px;background:#F3F4F6;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;font-size:7px;font-weight:700;">
+          <span>🏥 기저질환</span><span style="color:#9CA3AF;">▼</span>
+        </div>
+        <div style="margin:6px 8px 2px;font-size:7px;font-weight:700;">직접 입력</div>
+        <div style="margin:0 8px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:4px 7px;font-size:7px;color:#9CA3AF;">기타 원인을 입력하세요…</div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #E5E5E5;padding:5px 8px;background:#fff;display:flex;gap:4px;">
+          <div style="flex:1;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:6px;padding:5px;font-size:6.5px;text-align:center;color:#6B7280;">건너뛰기</div>
+          <div style="flex:1;background:var(--primary);border-radius:6px;padding:5px;font-size:6.5px;text-align:center;color:#fff;font-weight:700;">다음</div>
+        </div>
+      </div>
+      <div class="phone-label">S11 — 원인 기록</div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- S12 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">계획 수립 <span class="back">&lt;</span></div>
+        <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div><div class="step-dot on"></div><div class="step-dot cur"></div><div class="step-dot"></div></div>
+        <div style="text-align:center;font-size:9px;font-weight:700;margin:4px 0 8px;">어떻게 해결할 건가요?</div>
+        <!-- Plan 1 -->
+        <div style="margin:0 8px 5px;border:1px solid #E5E5E5;border-radius:8px;padding:6px 8px;">
+          <div style="font-size:7px;font-weight:700;margin-bottom:3px;">🏃 매일 스트레칭 10분</div>
+          <div style="background:#EFF6FF;border-radius:8px;padding:2px 6px;font-size:5.5px;color:var(--primary);display:inline-block;">🔔 매일 오전 7:00</div>
+        </div>
+        <!-- Plan 2 -->
+        <div style="margin:0 8px 5px;border:1px solid #E5E5E5;border-radius:8px;padding:6px 8px;">
+          <div style="font-size:7px;font-weight:700;margin-bottom:3px;">💊 진통제 처방 받기</div>
+          <div style="background:#EFF6FF;border-radius:8px;padding:2px 6px;font-size:5.5px;color:var(--primary);display:inline-block;">🔔 2026-05-13</div>
+        </div>
+        <!-- Add plan -->
+        <div style="margin:0 8px 6px;border:1px dashed #E5E5E5;border-radius:8px;padding:6px;text-align:center;font-size:7px;color:var(--primary);">+ 계획 추가 (최대 5개)</div>
+        <!-- Expected time -->
+        <div style="margin:3px 8px 2px;font-size:7px;font-weight:700;">예상 효과 시점</div>
+        <div style="margin:0 8px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:4px 7px;font-size:7px;">2주 후 (2026-05-25) ▾</div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #E5E5E5;padding:6px 8px;background:#fff;">
+          <div class="mini-btn">계획 저장 → 사이클 시작</div>
+        </div>
+      </div>
+      <div class="phone-label">S12 — 계획 수립</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 7 — Phase 1 완료 & Phase 2 시작 (S12a / S17)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;margin-bottom:22px;">
+    <div class="tag" style="color:var(--primary);">증상 관리 사이클 · Phase 1 완료 & Phase 2</div>
+    <h2 class="title" style="font-size:36px;">사이클 시작 확인 & 일일 체크인</h2>
+    <p class="subtitle" style="margin-bottom:0;">계획 저장 후 사이클이 "진행 중"으로 열리고, 이후 일상에서 비동기로 추이를 기록합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S12a -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone" style="overflow:visible;">
+        <!-- Background dim -->
+        <div style="position:absolute;inset:0;background:#F8F8F8;border-radius:26px;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.35);"></div>
+        </div>
+        <!-- Modal sheet -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:330px;background:#fff;border-radius:20px 20px 0 0;padding:8px 9px 7px;z-index:2;display:flex;flex-direction:column;">
+          <div style="width:36px;height:3px;background:#E5E5E5;border-radius:2px;margin:0 auto 8px;"></div>
+          <div style="text-align:center;font-size:11px;font-weight:800;margin-bottom:3px;">✅ 사이클 시작!</div>
+          <div style="text-align:center;font-size:6px;color:#6B7280;margin-bottom:5px;">어깨·목 · 계획 2개 저장됨</div>
+          <div style="background:#EFF6FF;border-radius:8px;padding:6px 8px;margin-bottom:5px;">
+            <div style="font-size:6.5px;font-weight:700;color:#1D4ED8;margin-bottom:3px;">📋 리마인더 일정</div>
+            <div style="font-size:6px;color:#1E40AF;margin-bottom:1px;">🔔 매일 오전 7:00 — 매일 스트레칭</div>
+            <div style="font-size:6px;color:#1E40AF;">🔔 2026-05-13 — 진통제 처방 받기</div>
+          </div>
+          <div style="background:#F0FDF4;border-radius:8px;padding:6px 8px;margin-bottom:5px;">
+            <div style="font-size:6.5px;font-weight:700;color:#166534;margin-bottom:2px;">📊 일일 증상 체크인</div>
+            <div style="font-size:6px;color:#14532D;">매일 알림으로 강도 추이를 기록합니다</div>
+          </div>
+          <div style="font-size:6px;color:#9CA3AF;text-align:center;margin-bottom:8px;">사이클은 "진행 중" 상태로 열린 채 유지됩니다</div>
+          <div style="flex:1;"></div>
+          <div class="mini-btn" style="font-size:7px;">홈으로 돌아가기</div>
+        </div>
+      </div>
+      <div class="phone-label">S12a — 사이클 시작 확인</div>
+    </div>
+
+    <div class="flow-arrow" style="margin-top:120px; color:#CBD5E1; font-size:20px;">·····</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#9CA3AF;margin-top:120px;width:60px;text-align:center;">Phase 2<br>비동기</div>
+    <div class="flow-arrow" style="margin-top:120px; color:#CBD5E1; font-size:20px;">·····</div>
+
+    <!-- S17 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone" style="overflow:visible;">
+        <!-- Background dim -->
+        <div style="position:absolute;inset:0;background:#F8F8F8;border-radius:26px;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.35);"></div>
+        </div>
+        <!-- Modal sheet -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:330px;background:#fff;border-radius:20px 20px 0 0;padding:8px 9px 7px;z-index:2;display:flex;flex-direction:column;">
+          <div style="width:36px;height:3px;background:#E5E5E5;border-radius:2px;margin:0 auto 8px;"></div>
+          <div style="font-size:9px;font-weight:800;margin-bottom:2px;text-align:center;">오늘 어떠세요?</div>
+          <div style="text-align:center;font-size:6px;color:#6B7280;margin-bottom:6px;">어깨·목 · 일일 증상 추이 체크인</div>
+          <!-- Intensity slider -->
+          <div style="margin:0 0 2px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:7px;font-weight:700;">오늘 통증 강도</span>
+            <span style="font-size:13px;font-weight:900;color:#F59E0B;">6</span>
+          </div>
+          <div style="margin-bottom:6px;">
+            <div class="slider-track">
+              <div class="slider-fill" style="width:60%;background:#F59E0B;"></div>
+              <div class="slider-thumb" style="left:calc(60% - 5px);background:#F59E0B;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:5.5px;color:#9CA3AF;">
+              <span>1 가벼움</span><span>10 매우 심함</span>
+            </div>
+          </div>
+          <!-- 7-day mini graph -->
+          <div style="font-size:7px;font-weight:700;margin-bottom:3px;">최근 7일 추이</div>
+          <div style="background:#F8FAFF;border-radius:7px;padding:5px 7px;margin-bottom:5px;display:flex;align-items:flex-end;gap:4px;height:36px;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#EF4444;border-radius:2px;width:100%;height:28px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">D-6</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#EF4444;border-radius:2px;width:100%;height:24px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">D-5</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#F59E0B;border-radius:2px;width:100%;height:20px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">D-4</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#F59E0B;border-radius:2px;width:100%;height:18px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">D-3</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#F59E0B;border-radius:2px;width:100%;height:20px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">D-2</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#10B981;border-radius:2px;width:100%;height:16px;"></div>
+              <div style="font-size:4px;color:#9CA3AF;">어제</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;">
+              <div style="background:#3B82F6;border-radius:2px;width:100%;border:1.5px solid #1D4ED8;height:22px;"></div>
+              <div style="font-size:4px;color:#1D4ED8;font-weight:700;">오늘</div>
+            </div>
+          </div>
+          <!-- Memo -->
+          <div style="font-size:7px;font-weight:700;margin-bottom:2px;">메모 (선택)</div>
+          <div style="background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:4px 7px;font-size:6px;color:#9CA3AF;margin-bottom:6px;">오늘 스트레칭 후 조금 나아진 느낌</div>
+          <div style="flex:1;"></div>
+          <div class="mini-btn" style="font-size:7px;">기록 저장</div>
+        </div>
+      </div>
+      <div class="phone-label">S17 — 일일 증상 추이 체크인</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 8 — 행동 & 결과 (S13 / S14)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;margin-bottom:26px;">
+    <div class="tag" style="color:var(--stomach);">증상 관리 사이클 · Phase 2 & Phase 3</div>
+    <h2 class="title" style="font-size:36px;">행동 기록 & 결과 추적</h2>
+    <p class="subtitle" style="margin-bottom:0;">Phase 2 비동기로 행동을 기록하고, 최소 3일 후 Phase 3에서 결과를 평가합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S13 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div style="background:#DCFCE7;padding:3px 8px;font-size:5.5px;font-weight:700;color:#166534;text-align:center;flex-shrink:0;">Phase 2 — 비동기 행동 기록</div>
+        <div class="phone-nav">행동 기록 <span class="back">&lt;</span></div>
+        <div style="text-align:center;font-size:9px;font-weight:700;margin:3px 0 1px;">계획을 실행했나요?</div>
+        <div style="text-align:center;font-size:6px;color:#9CA3AF;margin-bottom:7px;">2026-05-11 기준 · 리마인더 딥링크 진입</div>
+        <!-- Action 1: done -->
+        <div style="margin:0 8px 5px;border:1px solid #E5E5E5;border-radius:8px;padding:7px 8px;display:flex;align-items:center;gap:6px;">
+          <div style="width:16px;height:16px;background:var(--primary);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;flex-shrink:0;">✓</div>
+          <div style="font-size:7px;font-weight:700;">🏃 매일 스트레칭 10분</div>
+        </div>
+        <!-- Action 2: partial -->
+        <div style="margin:0 8px 5px;border:1px solid #E5E5E5;border-radius:8px;padding:6px 8px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <div style="width:16px;height:16px;border:1.5px solid #E5E5E5;border-radius:4px;flex-shrink:0;"></div>
+            <div style="font-size:7px;font-weight:700;">💊 진통제 처방 받기</div>
+          </div>
+          <div style="height:4px;background:#E5E5E5;border-radius:2px;margin-bottom:2px;">
+            <div style="height:100%;width:50%;background:var(--primary);border-radius:2px;"></div>
+          </div>
+          <div style="font-size:5.5px;color:#6B7280;">부분 완료 (50%)</div>
+        </div>
+        <div style="margin:0 8px 5px;border:1px dashed #E5E5E5;border-radius:8px;padding:5px;text-align:center;font-size:7px;color:var(--primary);">+ 추가 행동 기록</div>
+        <!-- Date nav -->
+        <div style="margin:0 8px;background:#F3F4F6;border-radius:6px;padding:4px 8px;display:flex;justify-content:space-between;font-size:7px;">
+          <span style="color:var(--primary);">‹ 이전</span>
+          <span>2026-05-11</span>
+          <span style="color:#9CA3AF;">다음 ›</span>
+        </div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #E5E5E5;padding:6px 8px;background:#fff;">
+          <div class="mini-btn">결과 추적하기</div>
+        </div>
+      </div>
+      <div class="phone-label">S13 — 행동 기록</div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- S14 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div style="background:#FED7AA;padding:3px 8px;font-size:5.5px;font-weight:700;color:#9A3412;text-align:center;flex-shrink:0;">Phase 3 — 3일↑ 행동 기록 후 활성화</div>
+        <div class="phone-nav">결과 추적 <span class="back">&lt;</span></div>
+        <div style="margin:6px 8px 4px;font-size:8px;font-weight:700;">통증 강도 변화</div>
+        <!-- Initial vs current -->
+        <div style="margin:0 8px 5px;display:flex;gap:4px;align-items:center;">
+          <div style="flex:1;background:#F3F4F6;border-radius:8px;padding:5px;text-align:center;">
+            <div style="font-size:5.5px;color:#6B7280;">초기 강도</div>
+            <div style="font-size:22px;font-weight:900;color:#EF4444;line-height:1.2;">7</div>
+            <div style="font-size:5.5px;color:#9CA3AF;">심함</div>
+          </div>
+          <div style="font-size:18px;color:#10B981;font-weight:700;">→</div>
+          <div style="flex:1;background:#F3F4F6;border-radius:8px;padding:5px;text-align:center;">
+            <div style="font-size:5.5px;color:#6B7280;">현재 강도</div>
+            <div style="font-size:22px;font-weight:900;color:#F59E0B;line-height:1.2;">4</div>
+            <div style="font-size:5.5px;color:#9CA3AF;">보통</div>
+          </div>
+        </div>
+        <!-- Outcome badge -->
+        <div style="margin:0 8px 6px;background:#ECFDF5;border-radius:8px;padding:5px;font-size:7px;color:#10B981;font-weight:700;text-align:center;">🟢 개선됨 (-3점, 43% 감소)</div>
+        <div style="margin:3px 8px 4px;font-size:7.5px;font-weight:700;">행동별 효과 평가</div>
+        <!-- Effect cards -->
+        <div style="margin:0 8px 3px;border:1px solid #E5E5E5;border-radius:6px;padding:5px 7px;">
+          <div style="font-size:7px;font-weight:700;margin-bottom:3px;">🏃 매일 스트레칭 10분</div>
+          <div style="background:#F0FDF4;border-radius:6px;padding:2px 7px;font-size:5.5px;color:#10B981;display:inline-block;">효과 있음</div>
+        </div>
+        <div style="margin:0 8px 5px;border:1px solid #E5E5E5;border-radius:6px;padding:5px 7px;">
+          <div style="font-size:7px;font-weight:700;margin-bottom:3px;">💊 진통제 처방 받기</div>
+          <div style="background:#FFFBEB;border-radius:6px;padding:2px 7px;font-size:5.5px;color:#F59E0B;display:inline-block;">효과 보통</div>
+        </div>
+        <!-- Flow 11 CTA -->
+        <div style="margin:0 8px;border:1px solid #E5E5E5;border-radius:6px;padding:5px;text-align:center;font-size:6.5px;color:var(--primary);">효과 없음? → Flow 11: 새 계획 수립하기</div>
+        <div style="flex:1;"></div>
+        <div style="border-top:1px solid #E5E5E5;padding:4px 8px 5px;background:#fff;">
+          <div style="font-size:5px;color:#9CA3AF;text-align:center;margin-bottom:2px;">자동 닫힘 없음 — 준비됐을 때 종료</div>
+          <div class="mini-btn">사이클 종료하기</div>
+        </div>
+      </div>
+      <div class="phone-label">S14 — 결과 추적</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 9 — 완료 & 히스토리 (S15 / S16)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;margin-bottom:26px;">
+    <div class="tag" style="color:var(--primary);">사이클 완료 & 히스토리</div>
+    <h2 class="title" style="font-size:36px;">요약 & 히스토리 조회</h2>
+    <p class="subtitle" style="margin-bottom:0;">한 사이클의 결과를 요약하고, 완료된 이력을 한눈에 확인합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S15 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone" style="overflow:visible;">
+        <!-- Background dim -->
+        <div style="position:absolute;inset:0;background:#F8F8F8;border-radius:26px;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);"></div>
+        </div>
+        <!-- Modal sheet -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:345px;background:#fff;border-radius:20px 20px 0 0;padding:8px 9px 7px;z-index:2;display:flex;flex-direction:column;">
+          <div style="width:36px;height:3px;background:#E5E5E5;border-radius:2px;margin:0 auto 8px;"></div>
+          <div style="text-align:center;font-size:12px;font-weight:800;margin-bottom:2px;">🎉 사이클 완료!</div>
+          <div style="text-align:center;font-size:5.5px;color:#166534;font-weight:700;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-bottom:2px;display:inline-block;">S14 "사이클 종료하기" 선택 후 표시</div>
+          <div style="text-align:center;font-size:6px;color:#6B7280;margin-bottom:5px;">어깨·목 · 2주 동안 관리</div>
+          <div style="border-top:1px solid #E5E5E5;margin-bottom:7px;"></div>
+          <!-- Summary card -->
+          <div style="background:#F0FDF4;border-radius:8px;padding:8px;margin-bottom:6px;">
+            <div style="font-size:6px;color:#6B7280;margin-bottom:2px;">통증 강도</div>
+            <div style="font-size:8px;font-weight:700;color:#10B981;margin-bottom:4px;">7 → 4점 (개선 43%)</div>
+            <div style="height:5px;background:#DCFCE7;border-radius:3px;position:relative;margin-bottom:4px;">
+              <div style="height:100%;width:57%;background:#10B981;border-radius:3px;"></div>
+            </div>
+            <div style="font-size:5.5px;color:#9CA3AF;">원인: 잘못된 자세, 수면 부족</div>
+          </div>
+          <div style="font-size:7.5px;font-weight:700;margin-bottom:4px;">효과적인 행동</div>
+          <div style="background:#F3F4F6;border-radius:6px;padding:3px 6px;font-size:6px;color:#10B981;margin-bottom:2px;">✓ 🏃 매일 스트레칭 10분</div>
+          <div style="background:#F3F4F6;border-radius:6px;padding:3px 6px;font-size:6px;color:#10B981;margin-bottom:8px;">✓ 💊 진통제 처방 받기</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;gap:4px;">
+            <div style="flex:1;background:#F3F4F6;border-radius:7px;padding:6px;text-align:center;font-size:6.5px;">홈으로</div>
+            <div style="flex:1;background:var(--primary);border-radius:7px;padding:6px;text-align:center;font-size:6.5px;color:#fff;font-weight:700;">히스토리 보기</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">S15 — 사이클 완료 요약</div>
+    </div>
+
+    <div class="flow-arrow">→</div>
+
+    <!-- S16 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">증상 히스토리</div>
+        <div style="padding:5px 8px;display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden;">
+          <span class="chip chip-on">전체</span>
+          <span class="chip">어깨·목</span>
+          <span class="chip">머리</span>
+          <span class="chip">위</span>
+        </div>
+        <!-- Cards -->
+        <div style="margin:3px 8px;background:#F0FDF4;border:1px solid #E5E5E5;border-radius:8px;padding:7px 8px;">
+          <div style="display:flex;gap:4px;margin-bottom:3px;align-items:center;">
+            <span style="background:#10B981;color:#fff;font-size:5.5px;font-weight:700;padding:2px 6px;border-radius:10px;">완료·개선</span>
+            <span class="chip" style="font-size:5px;padding:1px 5px;">어깨·목</span>
+          </div>
+          <div style="font-size:7.5px;font-weight:700;margin-bottom:2px;">목 디스크 통증</div>
+          <div style="font-size:5.5px;color:#6B7280;margin-bottom:2px;">2026-04-29 ~ 2026-05-11</div>
+          <div style="font-size:6px;color:#10B981;font-weight:700;">7 → 4점</div>
+        </div>
+        <div style="margin:3px 8px;background:#FFFBEB;border:1px solid #E5E5E5;border-radius:8px;padding:7px 8px;">
+          <div style="display:flex;gap:4px;margin-bottom:3px;align-items:center;">
+            <span style="background:#F59E0B;color:#fff;font-size:5.5px;font-weight:700;padding:2px 6px;border-radius:10px;">진행 중</span>
+            <span class="chip" style="font-size:5px;padding:1px 5px;">머리</span>
+          </div>
+          <div style="font-size:7.5px;font-weight:700;margin-bottom:2px;">편두통</div>
+          <div style="font-size:5.5px;color:#6B7280;margin-bottom:2px;">2026-05-01 ~ 진행 중</div>
+          <div style="font-size:6px;color:#F59E0B;font-weight:700;">6점</div>
+        </div>
+        <div style="margin:3px 8px;background:#FEF2F2;border:1px solid #E5E5E5;border-radius:8px;padding:7px 8px;">
+          <div style="display:flex;gap:4px;margin-bottom:3px;align-items:center;">
+            <span style="background:#EF4444;color:#fff;font-size:5.5px;font-weight:700;padding:2px 6px;border-radius:10px;">완료·악화</span>
+            <span class="chip" style="font-size:5px;padding:1px 5px;">위</span>
+          </div>
+          <div style="font-size:7.5px;font-weight:700;margin-bottom:2px;">속 쓰림</div>
+          <div style="font-size:5.5px;color:#6B7280;margin-bottom:2px;">2026-04-10 ~ 2026-04-24</div>
+          <div style="font-size:6px;color:#EF4444;font-weight:700;">3 → 5점</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="phone-tabs">
+          <span class="tab-on">🏠 홈</span><span>📋 타임</span><span>📊 요약</span><span>⚙️ 설정</span>
+        </div>
+      </div>
+      <div class="phone-label">S16 — 증상 히스토리</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 9 — 타임라인 & 효과 요약 (S5 / S6)
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;margin-bottom:26px;">
+    <div class="tag" style="color:var(--primary);">통합 조회 화면</div>
+    <h2 class="title" style="font-size:36px;">전체 타임라인 & 효과 요약</h2>
+    <p class="subtitle" style="margin-bottom:0;">모든 부위의 기록을 시간순으로, 치료 효과를 비교합니다</p>
+  </div>
+
+  <div class="phones-row">
+    <!-- S5 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">타임라인 <span class="right">필터 ▽</span></div>
+        <div style="padding:5px 8px;display:flex;gap:3px;overflow:hidden;">
+          <span class="chip chip-on">전체</span>
+          <span class="chip">어깨·목</span>
+          <span class="chip">머리</span>
+          <span class="chip">위</span>
+        </div>
+        <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">2026년 5월</div>
+        <div style="border-top:1px solid #E5E5E5;margin:0 8px 4px;"></div>
+        <div style="margin:0 8px 4px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+            <div style="width:7px;height:7px;background:var(--shoulder);border-radius:50%;flex-shrink:0;"></div>
+            <div style="font-size:7px;font-weight:700;">목 디스크 통증</div>
+          </div>
+          <div style="font-size:5.5px;color:#6B7280;">어깨·목 · 2026-05-02</div>
+          <div style="font-size:5.5px;color:#6B7280;">도수치료 진행 중 (3주차)</div>
+        </div>
+        <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">2026년 4월</div>
+        <div style="border-top:1px solid #E5E5E5;margin:0 8px 4px;"></div>
+        <div style="margin:0 8px 4px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+            <div style="width:7px;height:7px;background:var(--head);border-radius:50%;flex-shrink:0;"></div>
+            <div style="font-size:7px;font-weight:700;">편두통 재발</div>
+          </div>
+          <div style="font-size:5.5px;color:#6B7280;">머리 · 2026-04-25 · 편두통약 효과 있음</div>
+        </div>
+        <div style="margin:0 8px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+            <div style="width:7px;height:7px;background:var(--stomach);border-radius:50%;flex-shrink:0;"></div>
+            <div style="font-size:7px;font-weight:700;">속 쓰림</div>
+          </div>
+          <div style="font-size:5.5px;color:#6B7280;">위 · 2026-04-10 · 위장약 매우 효과 있음</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="phone-tabs"><span>🏠 홈</span><span class="tab-on">📋 타임</span><span>📊 요약</span><span>⚙️ 설정</span></div>
+      </div>
+      <div class="phone-label">S5 — 전체 타임라인</div>
+    </div>
+
+    <div style="width:32px;flex-shrink:0;"></div>
+
+    <!-- S6 -->
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="phone">
+        <div class="phone-nav">효과 요약</div>
+        <div style="padding:5px 8px;display:flex;gap:4px;">
+          <div style="flex:1;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:3px;text-align:center;font-size:6px;">부위 전체 ▾</div>
+          <div style="flex:1;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:3px;text-align:center;font-size:6px;">기간 3개월 ▾</div>
+        </div>
+        <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">어깨 · 목</div>
+        <div style="margin:0 8px 6px;border:1px solid #E5E5E5;border-radius:8px;overflow:hidden;">
+          <div style="padding:6px 8px;font-size:7.5px;font-weight:700;border-bottom:1px solid #E5E5E5;">목 디스크 통증</div>
+          <div style="padding:4px 8px;">
+            <div style="display:flex;justify-content:space-between;font-size:6.5px;margin-bottom:3px;">
+              <span>🏃 스트레칭 운동</span><span style="color:#F59E0B;">★★★★★</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:6.5px;margin-bottom:3px;">
+              <span>💊 도수치료</span><span style="color:#F59E0B;">★★★★☆</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:6.5px;">
+              <span>💊 진통제</span><span style="color:#F59E0B;">★★☆☆☆</span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">머리</div>
+        <div style="margin:0 8px;border:1px solid #E5E5E5;border-radius:8px;overflow:hidden;">
+          <div style="padding:6px 8px;font-size:7.5px;font-weight:700;border-bottom:1px solid #E5E5E5;">편두통</div>
+          <div style="padding:4px 8px;">
+            <div style="display:flex;justify-content:space-between;font-size:6.5px;margin-bottom:3px;">
+              <span>💊 편두통약</span><span style="color:#F59E0B;">★★★★☆</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:6.5px;">
+              <span>💤 수면 개선</span><span style="color:#F59E0B;">★★★☆☆</span>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="phone-tabs"><span>🏠 홈</span><span>📋 타임</span><span class="tab-on">📊 요약</span><span>⚙️ 설정</span></div>
+      </div>
+      <div class="phone-label">S6 — 효과 요약</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 10 — 네비게이션 구조
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="display:flex;align-items:center;gap:52px;width:100%;max-width:960px;">
+
+    <div style="flex:1;">
+      <div class="tag" style="color:var(--primary);">앱 아키텍처</div>
+      <h2 class="title" style="font-size:36px;">네비게이션 구조</h2>
+      <p style="font-size:15px;color:var(--text-sub);line-height:1.7;margin-bottom:24px;">4탭 바텀 내비게이션과<br>4개의 전역 모달로 구성된 18화면</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="background:#EFF6FF;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:13px;font-weight:700;color:#1D4ED8;margin-bottom:6px;">🏠 홈 탭</div>
+          <div style="font-size:11.5px;color:#1E40AF;line-height:1.8;">S1 Body Map → S2 기록 목록<br>→ S3 기록 상세<br>→ S9~S15 증상 관리 사이클 (3-Phase)</div>
+        </div>
+        <div style="background:#F0FDF4;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:6px;">📋 타임라인 탭</div>
+          <div style="font-size:11.5px;color:#14532D;line-height:1.8;">S5 전체 타임라인<br>→ S3 기록 상세</div>
+        </div>
+        <div style="background:#FFF7ED;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:13px;font-weight:700;color:#9A3412;margin-bottom:6px;">📊 요약 탭</div>
+          <div style="font-size:11.5px;color:#7C2D12;line-height:1.8;">S6 치료 효과 요약</div>
+        </div>
+        <div style="background:#F5F3FF;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:13px;font-weight:700;color:#5B21B6;margin-bottom:6px;">⚙️ 설정 탭</div>
+          <div style="font-size:11.5px;color:#4C1D95;line-height:1.8;">S7 설정 (계정·알림·앱 정보)</div>
+        </div>
+      </div>
+      <div style="background:#FFF5F5;border-radius:12px;padding:12px 16px;border:1px solid #FEE2E2;">
+        <div style="font-size:13px;font-weight:700;color:#991B1B;margin-bottom:5px;">전역 모달 (4개)</div>
+        <div style="font-size:12px;color:#7F1D1D;line-height:1.7;">S4 기록 추가/편집 · S8 주차 체크인 · S15 사이클 완료 요약 · S17 일일 체크인</div>
+      </div>
+    </div>
+
+    <div class="nav-diag">
+      <div style="color:var(--primary);font-weight:700;font-size:14px;margin-bottom:10px;">Bottom Tab Bar (4탭)</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── 🏠 Home → S1 → S2 → S3</div>
+      <div style="margin-left:36px;color:#3B82F6;font-size:11px;">└── 사이클 Phase 1:</div>
+      <div style="margin-left:60px;color:#3B82F6;font-size:11px;">S9→S10→S11→S12→S12a</div>
+      <div style="margin-left:36px;color:#10B981;font-size:11px;">Phase 2 (비동기):</div>
+      <div style="margin-left:60px;color:#10B981;font-size:11px;">S13 (딥링크), S17 (딥링크)</div>
+      <div style="margin-left:36px;color:#D97706;font-size:11px;">Phase 3 (3일↑): S14→S15</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── 📋 Timeline → S5 → S3</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── 📊 Summary → S6</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">└── ⚙️ Settings → S7</div>
+      <div style="margin-top:10px;color:var(--primary);font-weight:700;font-size:14px;margin-bottom:8px;">Modal (전역)</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── S4  기록 추가/편집</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── S8  주차 체크인</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">├── S15 사이클 완료 요약</div>
+      <div style="margin-left:12px;color:#1E40AF;font-size:12.5px;">└── S17 일일 증상 추이 체크인</div>
+      <div style="margin-top:10px;font-size:11px;color:#9CA3AF;">총 18개 화면 (S1~S17, S12a 포함) · 12개 User Flow</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 11 — 기술 스택 & 향후 계획
+════════════════════════════════════════ -->
+<div class="slide">
+  <div style="text-align:center;width:100%;max-width:860px;">
+    <div class="tag" style="color:var(--primary);">기술 & 로드맵</div>
+    <h2 class="title" style="font-size:36px;">기술 스택 & 향후 계획</h2>
+
+    <div class="tech-grid" style="margin-top:32px;">
+      <div class="tech-card" style="background:#EFF6FF;">
+        <h3 style="color:#1D4ED8;">현재 기술 스택</h3>
+        <div class="tech-item">📱 <span>React Native (iOS / Android)</span></div>
+        <div class="tech-item">🔷 <span>TypeScript</span></div>
+        <div class="tech-item">🎨 <span>컴포넌트 기반 UI 시스템</span></div>
+        <div class="tech-item">💾 <span>로컬 데이터 저장소</span></div>
+        <div class="tech-item">🔔 <span>푸시 알림 리마인더</span></div>
+      </div>
+      <div class="tech-card" style="background:#F0FDF4;">
+        <h3 style="color:#166534;">v1.1 로드맵</h3>
+        <div class="tech-item">🌙 <span>다크 모드 지원</span></div>
+        <div class="tech-item">🔐 <span>로그인 / 회원가입</span></div>
+        <div class="tech-item">👋 <span>온보딩 플로우</span></div>
+        <div class="tech-item">♿ <span>WCAG 1.4.11 접근성 검증</span></div>
+        <div class="tech-item">☁️ <span>클라우드 동기화</span></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-num">18</div>
+        <div class="stat-lbl">화면 (S1~S17 + S12a)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">12</div>
+        <div class="stat-lbl">User Flow</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">10</div>
+        <div class="stat-lbl">신체 부위 컬러 토큰</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">3</div>
+        <div class="stat-lbl">사이클 Phase</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     Slide 12 — 마무리
+════════════════════════════════════════ -->
+<div class="slide slide-dark">
+  <div style="text-align:center;max-width:680px;">
+    <div style="font-size:54px;margin-bottom:22px;">🩺</div>
+    <h2 style="font-size:52px;font-weight:900;color:#fff;margin-bottom:18px;line-height:1.15;letter-spacing:-1.5px;">건강 관리의 시작은<br>기록입니다</h2>
+    <p style="font-size:18px;color:#94A3B8;line-height:1.7;margin-bottom:40px;">BodyLog는 단순한 메모 앱이 아닙니다.<br>증상부터 결과까지 연결된 건강 관리 사이클을 제공합니다.</p>
+    <div class="body-dots" style="margin-bottom:40px;">
+      <span class="bdot" style="background:var(--head)"></span>
+      <span class="bdot" style="background:var(--eyes)"></span>
+      <span class="bdot" style="background:var(--shoulder)"></span>
+      <span class="bdot" style="background:var(--heart)"></span>
+      <span class="bdot" style="background:var(--liver)"></span>
+      <span class="bdot" style="background:var(--stomach)"></span>
+      <span class="bdot" style="background:var(--intestine)"></span>
+      <span class="bdot" style="background:var(--knee)"></span>
+      <span class="bdot" style="background:var(--spine)"></span>
+      <span class="bdot" style="background:var(--skin)"></span>
+    </div>
+    <p style="color:#475569;font-size:14px;">BodyLog · Quick Corp · 2026.05.11</p>
+  </div>
+</div>
+
+<!-- ── Progress & navigation ── -->
+<div id="progress">1 / 13</div>
+<div class="nav-hint">← → 화살표 키로 이동 · 클릭으로도 이동</div>
+
+<script>
+(function () {
+  var slides = document.querySelectorAll('.slide');
+  var prog   = document.getElementById('progress');
+  var total  = slides.length;
+  var cur    = 0;
+
+  function go(n) {
+    slides[cur].classList.remove('active');
+    cur = ((n % total) + total) % total;
+    slides[cur].classList.add('active');
+    prog.textContent = (cur + 1) + ' / ' + total;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  go(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    go(cur - 1);
+  });
+
+  var tx = 0;
+  document.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend',   function (e) {
+    var dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 48) go(cur + (dx < 0 ? 1 : -1));
+  });
+
+  document.addEventListener('click', function (e) {
+    go(cur + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+  });
+})();
+</script>
+</body>
+</html>
