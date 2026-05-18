@@ -1,0 +1,3089 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 에이전트 스터디 최종 공유 - Process and Result Edition</title>
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"></noscript>
+  <style>
+    /* =========================================
+       CSS RESET & BASE
+       ========================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #F4F4F5;
+      --bg-dark: #0A0A0A;
+      --bg-secondary: #FFFFFF;
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+      --accent: #00D26A;
+      --accent-text: #047857;
+      --divider: #E4E4E7;
+      --font-sans: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-family: var(--font-sans);
+    }
+
+    /* =========================================
+       DECK CONTAINER
+       ========================================= */
+    .deck-wrapper {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+    }
+
+    .deck {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* =========================================
+       SLIDE BASE
+       ========================================= */
+    .slide {
+      display: none;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 16 / 9;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    /* 16:9 스케일 컨테이너 */
+    .slide-inner {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform-origin: top left;
+      width: 1920px;
+      height: 1080px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* =========================================
+       DARK SLIDES (1, 2, 8)
+       ========================================= */
+    .slide-dark .slide-inner {
+      background: var(--bg-dark);
+      color: #FFFFFF;
+      padding: 72px 96px;
+    }
+
+    /* =========================================
+       LIGHT SLIDES (3~7)
+       ========================================= */
+    .slide-light .slide-inner {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 72px 96px;
+    }
+
+    /* =========================================
+       SLIDE NUMBER
+       ========================================= */
+    #slide-counter {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.5);
+      z-index: 100;
+      letter-spacing: 0.04em;
+      user-select: none;
+    }
+
+    /* =========================================
+       OVERVIEW MODE
+       ========================================= */
+    body.overview-mode .deck-wrapper {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    body.overview-mode .deck {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 32px;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    body.overview-mode .slide {
+      display: flex !important;
+      position: relative;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    body.overview-mode .slide.active {
+      border-color: var(--accent);
+    }
+
+    body.overview-mode .slide-inner {
+      transform: none !important;
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 16/9;
+      font-size: 0.25em;
+    }
+
+    /* =========================================
+       TYPOGRAPHY — HERO DARK (Slide 1)
+       ========================================= */
+    .hero-dark .slide-inner {
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .hero-eyebrow {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      word-break: keep-all;
+    }
+
+    .hero-title {
+      font-size: 72px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      word-break: keep-all;
+      margin-bottom: 24px;
+    }
+
+    .hero-subtitle {
+      font-size: 28px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      margin-bottom: 64px;
+    }
+
+    .hero-divider {
+      width: 64px;
+      height: 3px;
+      background: var(--accent);
+      margin-bottom: 40px;
+    }
+
+    .hero-byline {
+      font-size: 28px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: -0.01em;
+    }
+
+    /* =========================================
+       AGENDA DARK (Slide 2)
+       ========================================= */
+    .agenda-dark .slide-inner {
+      justify-content: center;
+    }
+
+    .agenda-title {
+      font-size: 52px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      margin-bottom: 64px;
+    }
+
+    .agenda-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .agenda-item {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      padding: 32px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .agenda-item:first-child {
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .agenda-num {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      width: 40px;
+      flex-shrink: 0;
+    }
+
+    .agenda-text {
+      font-size: 38px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+    }
+
+    /* =========================================
+       CONTENT BASIC (Slide 3)
+       ========================================= */
+    .content-basic .slide-inner {
+      justify-content: center;
+    }
+
+    .slide-title {
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      margin-bottom: 12px;
+    }
+
+    .slide-subtitle {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      margin-bottom: 48px;
+    }
+
+    .slide-divider {
+      width: 48px;
+      height: 2px;
+      background: var(--divider);
+      margin-bottom: 40px;
+    }
+
+    .slide-body-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+
+    .slide-body-list li {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .slide-body-list li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--text-tertiary);
+    }
+
+    @keyframes celebrate-pop {
+      0%   { transform: scale(0.7); opacity: 0; }
+      60%  { transform: scale(1.06); opacity: 1; }
+      80%  { transform: scale(0.97); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes celebrate-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,210,106,0.3); }
+      50%       { box-shadow: 0 0 0 16px rgba(0,210,106,0); }
+    }
+    .slide-emphasis {
+      display: inline-block;
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      padding: 24px 40px;
+      background: rgba(0, 210, 106, 0.08);
+      border-left: 5px solid var(--accent);
+      border-radius: 0 16px 16px 0;
+      margin-top: 32px;
+      animation: celebrate-pop 0.7s cubic-bezier(0.34,1.56,0.64,1) both,
+                 celebrate-pulse 2s ease-in-out 0.7s infinite;
+    }
+
+    /* =========================================
+       PIPELINE DIAGRAM (Slide 4)
+       ========================================= */
+    .pipeline-diagram .slide-inner {
+      justify-content: flex-start;
+    }
+
+    .diagram-header {
+      margin-bottom: 32px;
+      flex-shrink: 0;
+    }
+
+    .diagram-header .slide-title {
+      margin-bottom: 8px;
+    }
+
+    .diagram-subtitle {
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+    }
+
+    .diagram-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .diagram-container svg {
+      width: 100%;
+      height: 100%;
+      max-height: 500px;
+      object-fit: contain;
+    }
+
+    .diagram-caption {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      margin-top: 16px;
+      flex-shrink: 0;
+    }
+
+    .process-summary-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+
+    .process-summary-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E4E4E7;
+      border-radius: 18px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 12px 24px rgba(24,24,27,0.04);
+    }
+
+    .process-summary-card.accent {
+      background: #F0FDF4;
+      border-color: #BBF7D0;
+    }
+
+    .summary-chip {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #166534;
+      background: #DCFCE7;
+      text-transform: uppercase;
+    }
+
+    .process-summary-card p {
+      font-size: 18px;
+      line-height: 1.55;
+      color: #3F3F46;
+      word-break: keep-all;
+    }
+
+    /* =========================================
+       4-COLUMN GRID (Slide 5, 6)
+       ========================================= */
+    .four-grid .slide-inner {
+      justify-content: flex-start;
+    }
+
+    .grid-header {
+      margin-bottom: 40px;
+      flex-shrink: 0;
+    }
+
+    .grid-header .slide-title {
+      margin-bottom: 6px;
+    }
+
+    .grid-header .slide-subtitle {
+      margin-bottom: 0;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--divider);
+      border-radius: 16px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card-name {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+      letter-spacing: 0.02em;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      line-height: 1.3;
+    }
+
+    .card-divider {
+      width: 32px;
+      height: 2px;
+      background: var(--divider);
+    }
+
+    .card-body {
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    /* =========================================
+       SPLIT TEXT ACCENT (Slide 7)
+       ========================================= */
+    .split-text-accent .slide-inner {
+      justify-content: center;
+    }
+
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .split-left .slide-title {
+      margin-bottom: 8px;
+    }
+
+    .split-left .slide-subtitle {
+      margin-bottom: 40px;
+    }
+
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .bullet-list li {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      padding-left: 24px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .bullet-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .split-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .accent-quote {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      line-height: 1.7;
+      padding: 40px 48px;
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      border: 1px solid var(--divider);
+      border-left: 4px solid var(--accent);
+      position: relative;
+    }
+
+    .accent-quote::before {
+      content: '"';
+      font-size: 80px;
+      font-weight: 800;
+      color: var(--accent);
+      opacity: 0.15;
+      position: absolute;
+      top: 8px;
+      left: 16px;
+      line-height: 1;
+    }
+
+    /* =========================================
+       CLOSING DARK (Slide 8)
+       ========================================= */
+    .closing-dark .slide-inner {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .closing-tag {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    .closing-title {
+      font-size: 72px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.03em;
+      margin-bottom: 32px;
+    }
+
+    .closing-message {
+      font-size: 28px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      margin-bottom: 80px;
+    }
+
+    .closing-divider {
+      width: 64px;
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      margin: 0 auto;
+    }
+
+    /* =========================================
+       HERO ACCENT (C팀 강조)
+       ========================================= */
+    .hero-accent {
+      color: #00D26A;
+    }
+
+    /* =========================================
+       TEAM INTRO SLIDE (Slide 3)
+       ========================================= */
+    .team-intro .slide-inner {
+      justify-content: flex-start;
+      padding: 48px 96px;
+    }
+
+    .team-intro-header {
+      margin-bottom: 28px;
+    }
+
+    .team-photos {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      margin-bottom: 28px;
+    }
+
+    .team-photo-item {
+      flex: 1;
+      height: 200px;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .team-photo-item img {
+      cursor: zoom-in;
+      transition: transform 0.18s ease;
+    }
+
+    .team-photo-item img:hover {
+      transform: scale(1.03);
+    }
+
+    .team-photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+      background: #F4F4F5;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      width: 100%;
+    }
+
+    .team-card {
+      background: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      border-radius: 16px;
+      padding: 22px 20px;
+      grid-column: span 2;
+    }
+
+    /* 3-3-2 레이아웃: 마지막 두 카드 가운데 정렬 */
+    .team-card:nth-child(7) { grid-column: 2 / span 2; }
+    .team-card:nth-child(8) { grid-column: 4 / span 2; }
+
+    .team-card-name {
+      font-size: 26px;
+      font-weight: 700;
+      color: #18181B;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .team-card-role {
+      font-size: 18px;
+      font-weight: 600;
+      color: #00D26A;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .team-card-desc {
+      font-size: 15px;
+      font-weight: 400;
+      color: #A1A1AA;
+      letter-spacing: -0.01em;
+    }
+
+    /* =========================================
+       RETROSPECTIVE SLIDE — 2-COL QUOTES
+       ========================================= */
+    .retro-slide .slide-inner {
+      padding: 60px 80px;
+      justify-content: flex-start;
+    }
+
+    .retro-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 24px 36px;
+      margin-top: 28px;
+    }
+
+    .retro-item {
+      border-left: 4px solid #E4E4E7;
+      padding-left: 22px;
+      grid-column: span 2;
+    }
+
+    /* 3-3-2 레이아웃 */
+    .retro-item:nth-child(7) { grid-column: 2 / span 2; }
+    .retro-item:nth-child(8) { grid-column: 4 / span 2; }
+
+    /* 번갈아 녹색 강조 */
+    .retro-item:nth-child(odd) {
+      border-left-color: #00D26A;
+    }
+
+    .retro-item.accent {
+      border-left-color: #00D26A;
+    }
+
+    .retro-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #A1A1AA;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .retro-text {
+      font-size: 24px;
+      font-weight: 400;
+      color: #18181B;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+    }
+
+    .retro-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 18px;
+    }
+
+    .retro-summary-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E4E4E7;
+      border-radius: 20px;
+      padding: 26px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 156px;
+    }
+
+    .retro-summary-card.accent {
+      background: #F0FDF4;
+      border-color: #BBF7D0;
+    }
+
+    .retro-summary-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #00A857;
+      text-transform: uppercase;
+    }
+
+    .retro-summary-headline {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.3;
+      color: #18181B;
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+    }
+
+    .retro-summary-copy {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #52525B;
+      word-break: keep-all;
+    }
+
+    /* =========================================
+       SECTION COVER (그룹 구분 슬라이드)
+       ========================================= */
+    .section-cover .slide-inner {
+      justify-content: center;
+      align-items: flex-start;
+      padding: 72px 96px;
+    }
+    .section-group-tag {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .section-cover-title {
+      font-size: 64px;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      word-break: keep-all;
+      margin-bottom: 24px;
+    }
+    .section-cover-members {
+      font-size: 22px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: -0.01em;
+    }
+
+    /* =========================================
+       PROJECT DETAIL SLIDE
+       ========================================= */
+    .project-detail .slide-inner {
+      padding: 64px 96px;
+      justify-content: flex-start;
+      flex-direction: row;
+      gap: 64px;
+    }
+    .project-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .project-person-chip {
+      display: inline-block;
+      font-size: 16px;
+      font-weight: 700;
+      color: #A1A1AA;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .project-title {
+      font-size: 52px;
+      font-weight: 800;
+      color: #18181B;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      word-break: keep-all;
+      margin-bottom: 12px;
+    }
+    .project-subtitle {
+      font-size: 24px;
+      font-weight: 400;
+      color: #52525B;
+      letter-spacing: -0.01em;
+      margin-bottom: 36px;
+      word-break: keep-all;
+    }
+    .project-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .project-bullets li {
+      font-size: 24px;
+      font-weight: 400;
+      color: #18181B;
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .project-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #A1A1AA;
+      font-size: 20px;
+      line-height: 1.5;
+    }
+    .project-right {
+      width: 720px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-self: stretch;
+      gap: 20px;
+    }
+
+    .project-right-images {
+      width: 720px;
+      align-self: stretch;
+    }
+
+    .project-right-svg {
+      width: 720px;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-right-svg svg {
+      width: 100%;
+      height: 100%;
+      max-height: 900px;
+      display: block;
+    }
+
+    .project-right-split {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      width: 940px;
+      align-self: stretch;
+    }
+
+    .project-screenshots {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 270px;
+      flex-shrink: 0;
+      align-self: stretch;
+    }
+
+    .project-screenshot-img {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 10px;
+      border: 1px solid #E4E4E7;
+      background: #F4F4F5;
+      display: block;
+    }
+
+    .project-right-split .project-right-svg {
+      flex: 1;
+      width: auto;
+      align-self: stretch;
+    }
+
+    /* Slide 8 ooring 2x2 grid */
+    .ooring-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      height: 100%;
+    }
+    .ooring-row {
+      display: flex;
+      gap: 14px;
+      min-height: 0;
+    }
+    .ooring-row.row-top { flex: 3; }
+    .ooring-row.row-bottom { flex: 2; }
+    .ooring-img-main {
+      flex: 2;
+      min-width: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 16px;
+      border: 2px solid #E4E4E7;
+      background: #FFF8F5;
+    }
+    .ooring-img-sub {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 16px;
+      border: 2px solid #E4E4E7;
+      background: #FFFFFF;
+    }
+
+    .project-url-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent-text);
+      background: #F0FDF4;
+      border: 1.5px solid #BBF7D0;
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-decoration: none;
+      width: fit-content;
+    }
+
+    .project-screenshot-main {
+      width: 100%;
+      max-height: 540px;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 20px;
+      border: 2px solid #E4E4E7;
+      background: #FFFFFF;
+    }
+
+    .project-screenshots-sub {
+      display: flex;
+      gap: 16px;
+    }
+
+    .project-screenshot-card {
+      flex: 1;
+      height: 300px;
+      display: block;
+      border-radius: 16px;
+      border: 2px solid #E4E4E7;
+      background: #FFFFFF;
+      box-shadow: 0 12px 24px rgba(24,24,27,0.08);
+      overflow: hidden;
+    }
+
+    .project-screenshot-card svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .project-screenshot-sub {
+      flex: 1;
+      height: 300px;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 16px;
+      border: 2px solid #E4E4E7;
+      background: #FFFFFF;
+    }
+
+    .project-phones-row {
+      display: flex;
+      gap: 18px;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-phone {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: 232px;
+      max-height: 860px;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 24px;
+      border: 2px solid #E4E4E7;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+      background: #FFFFFF;
+    }
+    .project-gallery {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-content: center;
+      height: 100%;
+    }
+
+    .project-gallery-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .project-gallery-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E4E4E7;
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(24,24,27,0.08);
+    }
+
+    .project-gallery-card svg,
+    .project-gallery-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      background: #FFFFFF;
+    }
+
+    .project-gallery-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #71717A;
+      line-height: 1.4;
+    }
+
+    .project-gallery-meta strong {
+      color: #18181B;
+      font-weight: 700;
+    }
+
+    .project-previewable {
+      cursor: zoom-in;
+    }
+
+    .project-previewable:focus-visible {
+      outline: 3px solid rgba(0, 210, 106, 0.45);
+      outline-offset: 4px;
+    }
+
+    .project-source-note {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid #D4D4D8;
+      background: rgba(255,255,255,0.92);
+      color: #52525B;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .bodylog-preview {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      height: 100%;
+      --bodylog-head: #8B5CF6;
+      --bodylog-shoulder: #F59E0B;
+      --bodylog-heart: #EF4444;
+      --bodylog-liver: #D97706;
+      --bodylog-stomach: #10B981;
+      --bodylog-intestine: #059669;
+      --bodylog-knee: #3B82F6;
+      --bodylog-primary: #2563EB;
+      --bodylog-text-sub: #6B7280;
+      --bodylog-border: #E5E5E5;
+    }
+
+    .bodylog-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .bodylog-phone-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bodylog-phone {
+      width: 100%;
+      max-width: 224px;
+      height: 480px;
+      background: #fff;
+      border-radius: 28px;
+      border: 2px solid #2a2a2a;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .bodylog-nav {
+      height: 32px;
+      background: #F8F8F8;
+      border-bottom: 1px solid var(--bodylog-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      color: #1A1A1A;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .bodylog-nav .back {
+      position: absolute;
+      left: 8px;
+      color: var(--bodylog-primary);
+      font-size: 7px;
+    }
+
+    .bodylog-nav .right {
+      position: absolute;
+      right: 8px;
+      color: var(--bodylog-primary);
+      font-size: 7px;
+    }
+
+    .bodylog-tabs {
+      height: 30px;
+      background: #fff;
+      border-top: 1px solid var(--bodylog-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 6px;
+      color: #9CA3AF;
+      flex-shrink: 0;
+    }
+
+    .bodylog-tab-on {
+      color: var(--bodylog-primary);
+      font-weight: 700;
+    }
+
+    .bodylog-chip {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 6px;
+      background: #F3F4F6;
+      color: #6B7280;
+    }
+
+    .bodylog-chip-on {
+      background: var(--bodylog-primary);
+      color: #fff;
+    }
+
+    .bodylog-seg {
+      display: flex;
+      background: #F3F4F6;
+      border-radius: 7px;
+      padding: 2px;
+      margin: 5px 9px 3px;
+    }
+
+    .bodylog-seg-btn {
+      flex: 1;
+      text-align: center;
+      padding: 3px 0;
+      border-radius: 5px;
+      font-size: 6px;
+      color: #9CA3AF;
+    }
+
+    .bodylog-seg-btn.on {
+      background: #fff;
+      color: #1A1A1A;
+      font-weight: 700;
+    }
+
+    .bodylog-step-dots {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      padding: 5px 0 3px;
+    }
+
+    .bodylog-step-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #E5E5E5;
+    }
+
+    .bodylog-step-dot.on {
+      background: var(--bodylog-primary);
+    }
+
+    .bodylog-step-dot.cur {
+      width: 12px;
+      border-radius: 4px;
+      background: var(--bodylog-primary);
+    }
+
+    .bodylog-mini-btn {
+      background: var(--bodylog-primary);
+      color: #fff;
+      border-radius: 7px;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .bodylog-slider-track {
+      height: 4px;
+      background: #E5E5E5;
+      border-radius: 2px;
+      position: relative;
+      margin: 5px 0 2px;
+    }
+
+    .bodylog-slider-fill {
+      height: 100%;
+      border-radius: 2px;
+      position: absolute;
+      left: 0;
+    }
+
+    .bodylog-slider-thumb {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: absolute;
+      top: -3px;
+    }
+
+    .bodylog-phone-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #52525B;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .silver-preview {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      height: 100%;
+      --silver-bg: #F5F5F5;
+      --silver-surface: #FFFFFF;
+      --silver-surface-2: #E8EDF5;
+      --silver-text: #212121;
+      --silver-text-dim: #616161;
+      --silver-text-faint: #9E9E9E;
+      --silver-accent: #1565C0;
+      --silver-green: #2E7D32;
+      --silver-orange: #E65100;
+      --silver-border: #E0E0E0;
+    }
+
+    .silver-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .silver-phone-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .silver-phone {
+      width: 100%;
+      max-width: 228px;
+      height: 480px;
+      background: var(--silver-surface);
+      border-radius: 28px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 0 0 6px #2a2a2a;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
+      font-size: 12px;
+    }
+
+    .silver-notch {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      background: #1a1a1a;
+      border-radius: 50%;
+      z-index: 10;
+      box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    .silver-appbar {
+      height: 48px;
+      background: var(--silver-surface);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--silver-border);
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--silver-text);
+      flex-shrink: 0;
+    }
+
+    .silver-content {
+      flex: 1;
+      overflow: hidden;
+      padding: 14px;
+      background: var(--silver-bg);
+    }
+
+    .silver-content.white-bg {
+      background: var(--silver-surface);
+    }
+
+    .silver-bottom-nav {
+      height: 48px;
+      background: var(--silver-surface);
+      border-top: 1px solid var(--silver-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 10px;
+      color: var(--silver-text-faint);
+      flex-shrink: 0;
+    }
+
+    .silver-bottom-nav .active {
+      color: var(--silver-accent);
+      font-weight: 700;
+    }
+
+    .silver-card {
+      background: var(--silver-surface);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .silver-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .silver-caption {
+      font-size: 11px;
+      color: var(--silver-text-faint);
+    }
+
+    .silver-chip {
+      display: inline-block;
+      padding: 4px 8px;
+      background: var(--silver-bg);
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--silver-text-dim);
+      margin-right: 3px;
+    }
+
+    .silver-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .silver-badge.light {
+      color: var(--silver-green);
+    }
+
+    .silver-badge.moderate {
+      color: var(--silver-orange);
+    }
+
+    .silver-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--silver-border);
+      border-radius: 10px;
+      font-size: 13px;
+      background: var(--silver-surface);
+      color: var(--silver-text);
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+
+    .silver-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--silver-accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .silver-otp {
+      display: flex;
+      justify-content: space-between;
+      margin: 16px 0;
+    }
+
+    .silver-otp-box {
+      width: 34px;
+      height: 42px;
+      border: 2px solid var(--silver-border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .silver-otp-box.filled {
+      border-color: var(--silver-accent);
+    }
+
+    .silver-phone-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #52525B;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .project-detail img,
+    .project-detail svg,
+    .project-previewable {
+      cursor: zoom-in;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    body:not(.overview-mode) .project-detail img:hover,
+    body:not(.overview-mode) .project-detail svg:hover,
+    body:not(.overview-mode) .project-previewable:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 36px rgba(24,24,27,0.16);
+    }
+
+    body.preview-open {
+      overflow: hidden;
+    }
+
+    .media-preview-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      background: rgba(10, 10, 10, 0.82);
+      backdrop-filter: blur(16px);
+      z-index: 1200;
+      cursor: zoom-out;
+    }
+
+    .media-preview-overlay.is-open {
+      display: flex;
+    }
+
+    .media-preview-dialog {
+      width: min(92vw, 1600px);
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      cursor: default;
+    }
+
+    .media-preview-stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(24,24,27,0.94);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.42);
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .media-preview-stage img,
+    .media-preview-stage svg {
+      display: block;
+      max-width: min(86vw, 1500px);
+      max-height: calc(92vh - 144px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      background: #FFFFFF;
+      border-radius: 18px;
+    }
+
+    .media-preview-stage .preview-clone {
+      max-width: min(82vw, 1500px);
+    }
+
+    .media-preview-stage {
+      --bodylog-head: #8B5CF6;
+      --bodylog-shoulder: #F59E0B;
+      --bodylog-heart: #EF4444;
+      --bodylog-liver: #D97706;
+      --bodylog-stomach: #10B981;
+      --bodylog-intestine: #059669;
+      --bodylog-knee: #3B82F6;
+      --bodylog-primary: #2563EB;
+      --bodylog-text-sub: #6B7280;
+      --bodylog-border: #E5E5E5;
+    }
+
+    .media-preview-stage .preview-clone.bodylog-phone,
+    .media-preview-stage .preview-clone.silver-phone {
+      transform: scale(1.8);
+      transform-origin: top center;
+      margin: 120px 0 140px;
+    }
+
+    .media-preview-stage .preview-clone.project-gallery-card {
+      width: min(72vw, 920px);
+    }
+
+    .media-preview-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: rgba(255,255,255,0.84);
+      font-size: 15px;
+      line-height: 1.5;
+      padding: 0 4px;
+    }
+
+    .media-preview-caption strong {
+      font-weight: 600;
+    }
+
+    .media-preview-close-hint {
+      flex-shrink: 0;
+      color: rgba(255,255,255,0.56);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+    .project-accent-card {
+      background: #00D26A;
+      border-radius: 24px;
+      padding: 36px 32px;
+    }
+    .project-accent-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(0,0,0,0.45);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .project-accent-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0A0A0A;
+      line-height: 1.4;
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+    }
+    .project-meta-card {
+      background: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      border-radius: 16px;
+      padding: 24px 28px;
+    }
+    .project-meta-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #A1A1AA;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .project-meta-value {
+      font-size: 18px;
+      font-weight: 500;
+      color: #18181B;
+      letter-spacing: -0.01em;
+      word-break: keep-all;
+    }
+
+    /* =========================================
+       PRINT MODE
+       ========================================= */
+    @media print {
+      html, body {
+        overflow: visible;
+        background: white;
+      }
+
+      .deck-wrapper {
+        overflow: visible;
+      }
+
+      .deck {
+        display: block;
+      }
+
+      .slide {
+        display: flex !important;
+        position: relative;
+        page-break-after: always;
+        width: 100%;
+        aspect-ratio: 16/9;
+        break-after: page;
+      }
+
+      .slide-inner {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none !important;
+        width: 100%;
+        height: 100%;
+      }
+
+      #slide-counter {
+        display: none;
+      }
+    }
+
+    /* =========================================
+       TOYPROJECT OVERVIEW (Slide 6)
+       ========================================= */
+    .overview-groups {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      flex: 1;
+    }
+
+    .overview-group-card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      border: 2px solid var(--divider);
+    }
+
+    .overview-group-card.overview-group-accent {
+      border-color: var(--accent);
+      background: #F0FDF4;
+    }
+
+    .overview-group-num {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .overview-group-label {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.45;
+      word-break: keep-all;
+      flex: 1;
+    }
+
+    .overview-group-meta {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #71717A;
+      word-break: keep-all;
+    }
+
+    .overview-group-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      background: #FAFAFA;
+      border: 1px solid #F4F4F5;
+    }
+
+    .overview-group-card.overview-group-accent .overview-group-block {
+      background: rgba(255,255,255,0.8);
+      border-color: #DCFCE7;
+    }
+
+    .overview-group-block-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #00A857;
+      text-transform: uppercase;
+    }
+
+    .overview-group-block-text {
+      font-size: 18px;
+      line-height: 1.55;
+      color: #27272A;
+      word-break: keep-all;
+    }
+
+    .overview-group-members {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck-wrapper">
+  <div class="deck" id="deck">
+
+    <!-- =========================================
+         SLIDE 1 — Hero Dark
+         ========================================= -->
+    <section class="slide slide-dark hero-dark active" data-slide-no="1" data-template="hero-dark">
+      <div class="slide-inner">
+        <p class="hero-eyebrow">모닥랩</p>
+        <h1 class="hero-title">AI 에이전트 기반 개발 워크플로우<br>설계와 실습 <span class="hero-accent">C팀</span></h1>
+        <p class="hero-subtitle">5주간의 학습과 프로젝트 최종 공유</p>
+        <div class="hero-divider"></div>
+        <p class="hero-byline">2026.05</p>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 2 — Agenda Dark
+         ========================================= -->
+    <section class="slide slide-dark agenda-dark" data-slide-no="2" data-template="agenda-dark">
+      <div class="slide-inner">
+        <h1 class="agenda-title">오늘 발표 순서</h1>
+        <ol class="agenda-list">
+          <li class="agenda-item">
+            <span class="agenda-num">01</span>
+            <span class="agenda-text">팀원 소개</span>
+          </li>
+          <li class="agenda-item">
+            <span class="agenda-num">02</span>
+            <span class="agenda-text">1~2주차 간단 리뷰</span>
+          </li>
+          <li class="agenda-item">
+            <span class="agenda-num">03</span>
+            <span class="agenda-text">3~5주차 토이프로젝트</span>
+          </li>
+          <li class="agenda-item">
+            <span class="agenda-num">04</span>
+            <span class="agenda-text">회고</span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 3 — Team Intro (NEW)
+         ========================================= -->
+    <section class="slide slide-light team-intro" data-slide-no="3" data-template="team-intro">
+      <div class="slide-inner">
+        <div class="team-intro-header">
+          <h1 class="slide-title">C팀을 소개합니다</h1>
+          <p class="slide-subtitle">각자의 역할로 5주를 함께했어요</p>
+        </div>
+        <div class="team-photos">
+          <div class="team-photo-item">
+            <img src="assets/team_photo_1.png" alt="C팀 스터디 사진 1" data-preview-label="C팀 스터디 사진 1">
+          </div>
+          <div class="team-photo-item">
+            <img src="assets/team_photo_2.png" alt="C팀 스터디 사진 2" data-preview-label="C팀 스터디 사진 2">
+          </div>
+        </div>
+        <div class="team-grid">
+          <div class="team-card">
+            <p class="team-card-name">도현</p>
+            <p class="team-card-role">출석체크</p>
+            <p class="team-card-desc">매주 출석 사진 담당</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">현우</p>
+            <p class="team-card-role">서기</p>
+            <p class="team-card-desc">오늘 발표도 담당</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">영태</p>
+            <p class="team-card-role">정리 담당</p>
+            <p class="team-card-desc">마무리 인사 & 다음주 일정</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">성민</p>
+            <p class="team-card-role">아이스브레이킹</p>
+            <p class="team-card-desc">매주 분위기 메이커</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">수경</p>
+            <p class="team-card-role">노티봇</p>
+            <p class="team-card-desc">스터디 알림 담당</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">인호</p>
+            <p class="team-card-role">호스트</p>
+            <p class="team-card-desc">운영진 소통 & 스터디 기획</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">정호</p>
+            <p class="team-card-role">온라인 방 열기</p>
+            <p class="team-card-desc">슬랙 허들 or 디스코드</p>
+          </div>
+          <div class="team-card">
+            <p class="team-card-name">승현</p>
+            <p class="team-card-role">호스트의 호스트</p>
+            <p class="team-card-desc">인호님 뒤에서 든든하게</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 4 — Presenter Intro
+         ========================================= -->
+    <section class="slide slide-light content-basic" data-slide-no="4" data-template="content-basic">
+      <div class="slide-inner">
+        <h1 class="slide-title">오늘 발표는 제가 하겠습니다</h1>
+        <p class="slide-subtitle">원래는 호스트분이 발표를 해야 되지만...</p>
+        <div class="slide-divider"></div>
+        <ul class="slide-body-list">
+          <li>인호님이 취업 & 적응으로 정신없이 바쁜 상황</li>
+          <li>한 번쯤 발표해보고 싶었던 김에 대타로 자원했습니다</li>
+        </ul>
+        <span class="slide-emphasis">인호님 취업 진심으로 축하드립니다!</span>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 5 — Pipeline Diagram (Word Cloud)
+         ========================================= -->
+    <section class="slide slide-light pipeline-diagram" data-slide-no="5" data-template="pipeline-diagram">
+      <div class="slide-inner">
+        <div class="diagram-header">
+          <h1 class="slide-title">1~2주차 — 이런 걸 배웠어요</h1>
+          <p class="diagram-subtitle">같은 학습을 출발점으로 삼았지만, 각자 다른 문제를 풀며 프로젝트로 연결했습니다</p>
+        </div>
+        <div class="diagram-container" role="img" aria-label="AI 에이전트 스터디 1~2주차 학습 키워드 워드클라우드" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          <svg width="100%" height="100%" viewBox="0 0 1680 680"
+               xmlns="http://www.w3.org/2000/svg" role="img" style="max-height:680px;">
+            <title>AI 에이전트 스터디 1~2주차 학습 키워드 워드클라우드</title>
+            <style>
+              text { font-family: "Pretendard Variable", "Apple SD Gothic Neo", sans-serif; dominant-baseline: central; }
+            </style>
+            <rect width="1680" height="680" fill="#F4F4F5"/>
+            <text x="540" y="270" font-size="100" font-weight="800" fill="#00D26A" text-anchor="middle">AI 에이전트</text>
+            <text x="1240" y="210" font-size="84" font-weight="700" fill="#00D26A" text-anchor="middle">바이브 코딩</text>
+            <text x="250" y="460" font-size="90" font-weight="800" fill="#18181B" text-anchor="middle">MCP</text>
+            <text x="1420" y="370" font-size="50" font-weight="600" fill="#52525B" text-anchor="middle">하네스(Harness)</text>
+            <text x="195" y="168" font-size="52" font-weight="600" fill="#00D26A" text-anchor="middle">Paperclip</text>
+            <text x="1340" y="530" font-size="46" font-weight="600" fill="#52525B" text-anchor="middle">Context7</text>
+            <text x="870" y="105" font-size="50" font-weight="600" fill="#52525B" text-anchor="middle">프롬프트 엔지니어링</text>
+            <text x="820" y="570" font-size="46" font-weight="600" fill="#52525B" text-anchor="middle">PRD / 문서화</text>
+            <text x="1020" y="390" font-size="54" font-weight="700" fill="#00D26A" text-anchor="middle">멀티 에이전트</text>
+            <text x="600" y="640" font-size="46" font-weight="600" fill="#00D26A" text-anchor="middle">KB (Knowledge Base)</text>
+            <text x="1300" y="630" font-size="38" font-weight="600" fill="#00D26A" text-anchor="middle">LLM Wiki</text>
+            <text x="170" y="310" font-size="32" font-weight="500" fill="#A1A1AA" text-anchor="middle">Claude Code</text>
+            <text x="1560" y="140" font-size="30" font-weight="500" fill="#A1A1AA" text-anchor="middle">Codex</text>
+            <text x="118" y="578" font-size="30" font-weight="500" fill="#A1A1AA" text-anchor="middle">Gemini</text>
+            <text x="1490" y="260" font-size="32" font-weight="500" fill="#A1A1AA" text-anchor="middle">서브에이전트</text>
+            <text x="610" y="470" font-size="32" font-weight="500" fill="#A1A1AA" text-anchor="middle">툴 유즈(Tool Use)</text>
+            <text x="1570" y="465" font-size="34" font-weight="500" fill="#A1A1AA" text-anchor="middle">RAG</text>
+            <text x="1140" y="598" font-size="36" font-weight="600" fill="#00D26A" text-anchor="middle">MVP</text>
+            <text x="1220" y="72" font-size="28" font-weight="400" fill="#A1A1AA" text-anchor="middle">Vibe Coding</text>
+            <text x="420" y="608" font-size="26" font-weight="400" fill="#A1A1AA" text-anchor="middle">에이전트 루프</text>
+            <text x="720" y="208" font-size="34" font-weight="500" fill="#52525B" text-anchor="middle">생성형 AI</text>
+            <text x="990" y="66" font-size="26" font-weight="400" fill="#A1A1AA" text-anchor="middle">Tool Calling</text>
+            <text x="175" y="230" font-size="28" font-weight="400" fill="#A1A1AA" text-anchor="middle">자동화</text>
+          </svg>
+        </div>
+        <div class="process-summary-band">
+          <div class="process-summary-card">
+            <span class="summary-chip">Process</span>
+            <p>하네스, MCP, KB, 문서화, 멀티 에이전트 같은 공통 언어를 먼저 익히고 각자에게 맞는 작업 흐름으로 가져갔습니다.</p>
+          </div>
+          <div class="process-summary-card accent">
+            <span class="summary-chip">Result</span>
+            <p>누군가는 서비스 MVP를, 누군가는 개인 툴을, 누군가는 AI 인프라를 만들면서 같은 학습이 다른 결과물로 확장됐습니다.</p>
+          </div>
+        </div>
+        <p class="diagram-caption">각자의 관심사가 달라서, 배운 것도 프로젝트도 결과물도 전부 다르게 나왔습니다</p>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 6 — 3~5주차 토이프로젝트 개요
+         ========================================= -->
+    <section class="slide slide-light toyproject-overview" data-slide-no="6">
+      <div class="slide-inner">
+        <h1 class="slide-title" style="margin-bottom:12px;">3~5주차 토이프로젝트</h1>
+        <p class="slide-subtitle" style="margin-bottom:44px;">8명이 같은 스터디를 거쳤지만, 만드는 과정과 남긴 결과는 3가지 흐름으로 갈라졌어요</p>
+        <div class="overview-groups">
+          <div class="overview-group-card overview-group-accent">
+            <div class="overview-group-num">01</div>
+            <p class="overview-group-label">실제 사용자들에게<br>제공해볼 수 있는 서비스</p>
+            <p class="overview-group-meta">문제를 정하고 빠르게 MVP를 구현한 뒤, 배포와 피드백까지 이어간 흐름</p>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Process</div>
+              <div class="overview-group-block-text">UI 구현, 에이전트 역할 분업, 실제 사용 흐름 검증에 집중</div>
+            </div>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Result</div>
+              <div class="overview-group-block-text">실사용 가능한 앱, 공모전 출품작, 사용자 친화형 시니어 서비스 mockup</div>
+            </div>
+            <div class="overview-group-members">인호 · 성민 · 영태</div>
+          </div>
+          <div class="overview-group-card">
+            <div class="overview-group-num">02</div>
+            <p class="overview-group-label">개인이 사용해보고 싶은<br>아이디어 기반 프로젝트</p>
+            <p class="overview-group-meta">관심 있는 문제를 스스로 정의하고, 작은 실험으로 배움의 폭을 넓힌 흐름</p>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Process</div>
+              <div class="overview-group-block-text">기획을 구조화하고, 데이터와 입력을 다듬고, 실패 사례까지 정리</div>
+            </div>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Result</div>
+              <div class="overview-group-block-text">트레이딩 실험 리포트, 자소서 자동화 플러그인, 증상 기록 앱 프로토타입</div>
+            </div>
+            <div class="overview-group-members">도현 · 수경 · 정호</div>
+          </div>
+          <div class="overview-group-card">
+            <div class="overview-group-num">03</div>
+            <p class="overview-group-label">AI를 더 잘 쓰기 위한<br>인프라 프로젝트</p>
+            <p class="overview-group-meta">단발성 사용을 넘어서, 다음 작업에도 반복해서 쓸 수 있는 기반을 만든 흐름</p>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Process</div>
+              <div class="overview-group-block-text">개인 KB 연결, 대시보드 구성, 자동 정리 흐름과 호출 인터페이스 설계</div>
+            </div>
+            <div class="overview-group-block">
+              <div class="overview-group-block-title">Result</div>
+              <div class="overview-group-block-text">slide-master, 출처 태그, Obsidian MCP, 자동 브리핑 위키 시스템</div>
+            </div>
+            <div class="overview-group-members">현우 · 승현</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 7 — 그룹 1 커버: 실제 프로덕트 도전
+         ========================================= -->
+    <section class="slide slide-dark section-cover" data-slide-no="7">
+      <div class="slide-inner">
+        <p class="section-group-tag">Group 01 — 3~5주차 토이프로젝트</p>
+        <h1 class="section-cover-title">실제 서비스를<br>만들어 보다</h1>
+        <p class="section-cover-members">인호 · 성민 · 영태</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 6-1: 인호 -->
+    <section class="slide slide-light project-detail" data-slide-no="8">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">인호 · Group 01</span>
+          <h1 class="project-title">우링 (ooring)</h1>
+          <p class="project-subtitle">룸메이트·가족·커플 간 가사 분담 공유 앱</p>
+          <ul class="project-bullets">
+            <li>Paperclip으로 하루만에 MVP 완성 · iOS 배포 · 실사용자 운영 중</li>
+            <li>회원가입 없이 닉네임+기기 기반, 초대 코드로 공간 참여</li>
+            <li>UX 디자이너 · CTO · QA 역할별 AI 에이전트 분업으로 개발</li>
+            <li>iOS 26 Liquid Glass UI 대응, 실사용자 버그 신고 대응 중</li>
+          </ul>
+        </div>
+        <div class="project-right project-right-images">
+          <div class="ooring-grid">
+            <div class="ooring-row row-top">
+              <img class="ooring-img-main" src="assets/ooring_app.png" alt="우링 앱 실제 화면 — 집안일 완료 · 알림 · 쓰담쓰담 플로우">
+              <img class="ooring-img-sub" src="../week2/materials/신인호_2주차_공유자료/ppt_image/6.png" alt="Paperclip CEO 이슈 작업 중">
+            </div>
+            <div class="ooring-row row-bottom">
+              <img class="ooring-img-sub" src="../week2/materials/신인호_2주차_공유자료/ppt_image/5.png" alt="우링 Paperclip 대시보드 — CEO 에이전트 실행 중">
+              <img class="ooring-img-sub" src="../week2/materials/신인호_2주차_공유자료/ppt_image/2.png" alt="Paperclip 에이전트 생성">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6-2: 성민 -->
+    <section class="slide slide-light project-detail" data-slide-no="9">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">성민 · Group 01</span>
+          <h1 class="project-title">gozip</h1>
+          <p class="project-subtitle">랜덤 여행 & 이동 추천 서비스</p>
+          <ul class="project-bullets">
+            <li>지역·이동수단·액션을 조합해 즉흥 여행 시나리오 생성</li>
+            <li>여행 모드 / 신속 모드 / 거지 모드 / 랜덤 모드 4가지</li>
+            <li>AI 없이 순수 배열 기반 — 빠르고 가벼운 프론트 단독 동작</li>
+            <li>관광 데이터 활용 공모전 출품 & 1차 MVP 배포 완료</li>
+          </ul>
+          <span class="project-url-chip">go.random-zip.com</span>
+        </div>
+        <div class="project-right project-right-images">
+          <div class="project-phones-row">
+            <img class="project-phone" src="assets/gozip/home.png" alt="gozip 홈 화면">
+            <img class="project-phone" src="assets/gozip/mode.png" alt="gozip 모드 선택">
+            <img class="project-phone" src="assets/gozip/result.png" alt="gozip 추천 결과">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6-3: 영태 -->
+    <section class="slide slide-light project-detail" data-slide-no="10">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">영태 · Group 01</span>
+          <h1 class="project-title">시니어 구인구직 앱</h1>
+          <p class="project-subtitle">60대 이상을 위한 일자리 매칭 서비스 (SilverWorker)</p>
+          <ul class="project-bullets">
+            <li>전화번호+OTP 로그인, 노동 강도 표시 등 시니어 맞춤 UX</li>
+            <li>OpenCode 구현 + Claude & Gemini 멀티 AI PR 리뷰 — 단일 브랜치 전략</li>
+            <li>Claude는 blocker/major/minor 세분화 비판 · Gemini는 보완적 시각</li>
+            <li>Flutter + Firebase · 고용24 API 발급 대기 (현재는 목업 진행)</li>
+          </ul>
+        </div>
+        <div class="project-right">
+          <div class="silver-preview">
+            <div class="project-source-note">week5/materials SilverWorker 실제 화면 발췌</div>
+            <div class="silver-preview-grid">
+              <div class="silver-phone-wrap">
+                <div class="silver-phone project-previewable" data-preview-label="SilverWorker 홈 화면">
+                  <div class="silver-notch"></div>
+                  <div class="silver-appbar">은빛일자리</div>
+                  <div class="silver-content">
+                    <div class="silver-card">
+                      <div class="silver-title">아파트 경비원 모집</div>
+                      <div class="silver-caption">종로구청</div>
+                      <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="silver-chip">정규직</span>
+                        <span class="silver-badge light">● 가벼움</span>
+                      </div>
+                    </div>
+                    <div class="silver-card">
+                      <div class="silver-title">사무실 청소 담당</div>
+                      <div class="silver-caption">중구청</div>
+                      <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                        <span class="silver-chip">단기</span>
+                        <span class="silver-badge moderate">● 보통</span>
+                      </div>
+                    </div>
+                    <div class="silver-card" style="background:linear-gradient(180deg,rgba(21,101,192,0.06),rgba(21,101,192,0.01)),#fff; border:1px solid rgba(21,101,192,0.14);">
+                      <div style="font-size:11px; font-weight:700; color:var(--silver-accent); margin-bottom:6px;">시니어 맞춤 안전 배지</div>
+                      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <span class="silver-chip">계단 없음</span>
+                        <span class="silver-chip">실내 근무</span>
+                        <span class="silver-chip">주 5일</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="silver-bottom-nav">
+                    <span class="active">홈</span><span>지원현황</span><span>마이페이지</span>
+                  </div>
+                </div>
+                <div class="silver-phone-label">홈 · 일자리 목록</div>
+              </div>
+
+              <div class="silver-phone-wrap">
+                <div class="silver-phone project-previewable" data-preview-label="SilverWorker OTP 인증 화면">
+                  <div class="silver-notch"></div>
+                  <div class="silver-appbar" style="justify-content:space-between;"><span>←</span><span></span></div>
+                  <div class="silver-content white-bg" style="padding-top:16px;">
+                    <div style="font-size:15px; font-weight:700; line-height:1.45;">인증번호 6자리를<br>입력하세요</div>
+                    <div class="silver-otp">
+                      <div class="silver-otp-box filled">1</div>
+                      <div class="silver-otp-box filled">2</div>
+                      <div class="silver-otp-box filled">3</div>
+                      <div class="silver-otp-box">4</div>
+                      <div class="silver-otp-box">5</div>
+                      <div class="silver-otp-box">6</div>
+                    </div>
+                    <p style="text-align:center; font-size:12px; color:var(--silver-text-faint);">45초 후 재발송 가능</p>
+                    <div style="margin-top:24px; border:1px solid var(--silver-border); border-radius:12px; padding:12px; background:#F8FAFC;">
+                      <div style="font-size:11px; font-weight:700; color:var(--silver-accent); margin-bottom:6px;">Firebase Phone Auth</div>
+                      <div style="font-size:12px; color:var(--silver-text-dim); line-height:1.5;">비밀번호 없이 SMS OTP로 로그인. 시니어 사용자를 위해 단계 수를 최소화했습니다.</div>
+                    </div>
+                    <div style="margin-top:auto; padding-top:24px;">
+                      <button class="silver-btn">확인</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="silver-phone-label">OTP · 전화번호 인증</div>
+              </div>
+
+              <div class="silver-phone-wrap">
+                <div class="silver-phone project-previewable" data-preview-label="SilverWorker 지원서 작성 화면">
+                  <div class="silver-notch"></div>
+                  <div class="silver-appbar">지원서 작성</div>
+                  <div class="silver-content" style="padding-bottom:56px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--silver-text-dim); margin-bottom:8px;">근무 가능 요일</div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+                      <span class="silver-chip">월</span>
+                      <span class="silver-chip">화</span>
+                      <span class="silver-chip">수</span>
+                      <span class="silver-chip">목</span>
+                      <span class="silver-chip">금</span>
+                    </div>
+                    <div style="font-size:11px; font-weight:700; color:var(--silver-text-dim); margin-bottom:6px;">자기소개</div>
+                    <div class="silver-input" style="height:84px; margin-bottom:10px;">시니어 친화적인 환경에서 성실하게 근무할 수 있습니다.</div>
+                    <div class="silver-card" style="margin-bottom:10px;">
+                      <div style="font-size:11px; font-weight:700; color:var(--silver-accent); margin-bottom:6px;">지원 정보 요약</div>
+                      <div style="font-size:12px; color:var(--silver-text-dim); line-height:1.6;">카페 서빙 알바 · 서울 마포구<br>노동강도 낮음 · 연령우대</div>
+                    </div>
+                    <div class="silver-card" style="background:#F0FDF4; border:1px solid #BBF7D0;">
+                      <div style="font-size:11px; font-weight:700; color:#166534; margin-bottom:4px;">Mock 데이터 기반 MVP</div>
+                      <div style="font-size:12px; color:#166534; line-height:1.5;">고용24 API 발급 전까지 실사용 흐름을 먼저 검증한 주차 자료 화면입니다.</div>
+                    </div>
+                  </div>
+                  <div class="silver-bottom-nav">
+                    <span>홈</span><span class="active">지원현황</span><span>마이페이지</span>
+                  </div>
+                </div>
+                <div class="silver-phone-label">지원 · 작성 플로우</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 7 — 그룹 2 커버: 아이디어 실험
+         ========================================= -->
+    <section class="slide slide-dark section-cover" data-slide-no="11">
+      <div class="slide-inner">
+        <p class="section-group-tag">Group 02 — 3~5주차 토이프로젝트</p>
+        <h1 class="section-cover-title">필요한 걸<br>직접 만들어 써보다</h1>
+        <p class="section-cover-members">도현 · 수경 · 정호</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 7-1: 도현 -->
+    <section class="slide slide-light project-detail" data-slide-no="12">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">도현 · Group 02</span>
+          <h1 class="project-title">트레이딩 에이전트<br>코인 모의투자 실험</h1>
+          <p class="project-subtitle">홈서버 + 로컬 LLM에 투자 판단 위임을 목표로 한 실험</p>
+          <ul class="project-bullets">
+            <li>GPT·Claude에게 매수/매도 판단을 시키는 실험 — CSV/DB로 모의투자</li>
+            <li>백테스팅 신뢰성 한계 — GPT가 과거 시세를 이미 알고 있을 수 있음</li>
+            <li>실시간 환경 한계 — 빗썸 API IP 등록, 노트북 IP 변동, 회사망 차단</li>
+            <li>LLM 없이 차트 기반도 손실 반복 → AI 맹신 금지, 장기 프로젝트로 전환</li>
+          </ul>
+        </div>
+        <div class="project-right project-right-svg">
+          <svg viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable','Apple SD Gothic Neo',sans-serif">
+            <rect width="720" height="900" rx="24" fill="#FFFFFF"/>
+            <text x="48" y="60" font-size="16" font-weight="700" fill="#A1A1AA" letter-spacing="2">TRADING EXPERIMENT</text>
+            <text x="48" y="100" font-size="30" font-weight="800" fill="#18181B">실험 결과와 한계</text>
+
+            <rect x="48" y="138" width="272" height="120" rx="20" fill="#F4F4F5" stroke="#E4E4E7"/>
+            <text x="112" y="172" font-size="14" font-weight="700" fill="#71717A">목표</text>
+            <text x="112" y="204" font-size="20" font-weight="800" fill="#18181B">로컬 LLM으로</text>
+            <text x="112" y="232" font-size="20" font-weight="800" fill="#18181B">투자 판단 자동화</text>
+
+            <rect x="400" y="138" width="272" height="120" rx="20" fill="#FEF2F2" stroke="#FCA5A5"/>
+            <text x="444" y="172" font-size="14" font-weight="700" fill="#B91C1C">현실</text>
+            <text x="444" y="204" font-size="20" font-weight="800" fill="#991B1B">검증 한계를 확인하고</text>
+            <text x="444" y="232" font-size="20" font-weight="800" fill="#991B1B">장기 프로젝트로 전환</text>
+
+            <line x1="360" y1="266" x2="360" y2="304" stroke="#D4D4D8" stroke-width="5" stroke-linecap="round"/>
+            <polygon points="360,322 346,300 374,300" fill="#D4D4D8"/>
+
+            <rect x="48" y="332" width="624" height="216" rx="22" fill="#0F172A"/>
+            <text x="80" y="374" font-size="16" font-weight="700" fill="#94A3B8">관찰된 결과</text>
+            <line x1="80" y1="430" x2="640" y2="430" stroke="#334155" stroke-width="2"/>
+            <path d="M 100 408 C 190 420, 260 446, 340 456 C 430 468, 520 482, 620 494" stroke="#EF4444" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="408" r="7" fill="#EF4444"/>
+            <circle cx="340" cy="456" r="7" fill="#EF4444"/>
+            <circle cx="620" cy="494" r="7" fill="#EF4444"/>
+            <text x="80" y="468" font-size="28" font-weight="800" fill="#FFFFFF">손실 추세가 반복됨</text>
+            <text x="80" y="500" font-size="14" fill="#94A3B8">LLM 사용 여부와 관계없이</text>
+            <text x="80" y="522" font-size="14" fill="#94A3B8">전략 자체의 검증이 먼저 필요했습니다</text>
+
+            <text x="48" y="586" font-size="16" font-weight="700" fill="#A1A1AA">막혔던 지점 3가지</text>
+
+            <rect x="48" y="610" width="190" height="120" rx="18" fill="#FFFBEB" stroke="#FCD34D"/>
+            <text x="84" y="647" font-size="14" font-weight="700" fill="#92400E">1. 백테스팅 신뢰성</text>
+            <text x="84" y="679" font-size="16" font-weight="800" fill="#18181B">과거 시세를</text>
+            <text x="84" y="703" font-size="16" font-weight="800" fill="#18181B">이미 아는 문제</text>
+
+            <rect x="264" y="610" width="190" height="120" rx="18" fill="#FFFBEB" stroke="#FCD34D"/>
+            <text x="304" y="647" font-size="14" font-weight="700" fill="#92400E">2. 실시간 환경</text>
+            <text x="304" y="679" font-size="16" font-weight="800" fill="#18181B">API IP 등록과</text>
+            <text x="304" y="703" font-size="16" font-weight="800" fill="#18181B">망 제약</text>
+
+            <rect x="480" y="610" width="190" height="120" rx="18" fill="#FFFBEB" stroke="#FCD34D"/>
+            <text x="530" y="647" font-size="14" font-weight="700" fill="#92400E">3. 전략 부재</text>
+            <text x="530" y="679" font-size="16" font-weight="800" fill="#18181B">AI보다 먼저</text>
+            <text x="530" y="703" font-size="16" font-weight="800" fill="#18181B">기준이 필요</text>
+
+            <rect x="48" y="760" width="624" height="106" rx="22" fill="#F0FDF4" stroke="#86EFAC"/>
+            <text x="261" y="791" font-size="14" font-weight="700" fill="#15803D">교훈</text>
+            <text x="261" y="821" font-size="18" font-weight="800" fill="#166534">AI를 붙이기 전에</text>
+            <text x="261" y="845" font-size="18" font-weight="800" fill="#166534">전략 검증부터 필요합니다</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7-2: 수경 -->
+    <section class="slide slide-light project-detail" data-slide-no="13">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">수경 · Group 02</span>
+          <h1 class="project-title">내 자소설닷컴</h1>
+          <p class="project-subtitle">AI 기반 맞춤형 자기소개서 작성 · 관리 Obsidian Plugin</p>
+          <ul class="project-bullets">
+            <li>Manyfast로 PRD/기능명세 자동 생성 — 기획 = 개발 체크리스트</li>
+            <li>내 경험 + 기업 분석(인재상·뉴스·직무공고·ESG)을 자동 매핑</li>
+            <li>Firecrawl로 기업 정보 크롤링 → Claude API로 문항별 초안 생성</li>
+            <li>Obsidian Community Plugin · Phase 1 MVP 4,700줄 구현 완료</li>
+          </ul>
+        </div>
+        <div class="project-right">
+          <div class="project-gallery">
+            <div class="project-source-note">week5/materials 대표 슬라이드 기반</div>
+            <div class="project-gallery-row">
+              <div class="project-gallery-card project-previewable" data-preview-label="내 자소설닷컴 기획서에서 개발까지의 플로우 슬라이드">
+                <svg viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable','Apple SD Gothic Neo',sans-serif" role="img" aria-label="내 자소설닷컴 기획서에서 개발까지의 플로우 슬라이드">
+                  <rect width="720" height="900" rx="24" fill="#FFFFFF"/>
+                  <text x="48" y="58" font-size="14" font-weight="700" fill="#00D26A" letter-spacing="2">MANYFAST WORKFLOW</text>
+                  <text x="48" y="94" font-size="30" font-weight="800" fill="#18181B">기획서에서 개발까지</text>
+
+                  <rect x="56" y="150" width="608" height="118" rx="22" fill="#F4F4F5" stroke="#E4E4E7"/>
+                  <text x="261" y="183" font-size="14" font-weight="700" fill="#71717A">1. INPUT</text>
+                  <text x="261" y="219" font-size="22" font-weight="800" fill="#18181B">자소서 기획서 작성</text>
+                  <text x="261" y="245" font-size="15" fill="#52525B">요구사항과 흐름을 먼저 문서화</text>
+
+                  <line x1="360" y1="282" x2="360" y2="314" stroke="#D4D4D8" stroke-width="5" stroke-linecap="round"/>
+                  <polygon points="360,332 346,310 374,310" fill="#D4D4D8"/>
+
+                  <rect x="56" y="348" width="608" height="146" rx="22" fill="#0F172A"/>
+                  <text x="269" y="380" font-size="14" font-weight="700" fill="#00D26A">2. AUTOMATION</text>
+                  <text x="269" y="420" font-size="22" font-weight="800" fill="#FFFFFF">Manyfast로 구조화</text>
+                  <text x="269" y="450" font-size="15" fill="#A1A1AA">문서를 기능 단위와</text>
+                  <text x="269" y="472" font-size="15" fill="#A1A1AA">완료 기준으로 분해</text>
+
+                  <line x1="360" y1="508" x2="360" y2="540" stroke="#D4D4D8" stroke-width="5" stroke-linecap="round"/>
+                  <polygon points="360,558 346,536 374,536" fill="#D4D4D8"/>
+
+                  <rect x="56" y="578" width="286" height="136" rx="22" fill="#FFFFFF" stroke="#E4E4E7"/>
+                  <text x="124" y="616" font-size="14" font-weight="700" fill="#71717A">3. SPEC OUTPUT</text>
+                  <text x="124" y="656" font-size="22" font-weight="800" fill="#18181B">기능 목록</text>
+                  <text x="124" y="686" font-size="15" fill="#52525B">핵심 화면 / 예외 케이스</text>
+
+                  <rect x="378" y="578" width="286" height="136" rx="22" fill="#ECFDF3" stroke="#86EFAC"/>
+                  <text x="445" y="616" font-size="14" font-weight="700" fill="#15803D">4. DEV READY</text>
+                  <text x="445" y="656" font-size="22" font-weight="800" fill="#166534">개발 체크리스트</text>
+                  <text x="445" y="686" font-size="15" fill="#166534">구현 순서 / 검증 포인트</text>
+
+                  <rect x="56" y="770" width="608" height="96" rx="18" fill="#F0FDF4" stroke="#BBF7D0"/>
+                  <text x="269" y="812" font-size="16" font-weight="800" fill="#166534">결과: 기획 문서가 바로</text>
+                  <text x="269" y="836" font-size="16" font-weight="800" fill="#166534">개발 착수 기준으로 연결됨</text>
+                </svg>
+                <div class="project-gallery-meta">
+                  <strong>기획서 → 개발 플로우</strong>
+                  <span>Manyfast 기반 PRD 자동 생성</span>
+                </div>
+              </div>
+              <div class="project-gallery-card project-previewable" data-preview-label="내 자소설닷컴 핵심 기능 흐름 슬라이드">
+                <svg viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable','Apple SD Gothic Neo',sans-serif" role="img" aria-label="내 자소설닷컴 핵심 기능 흐름 슬라이드">
+                  <rect width="720" height="900" rx="24" fill="#FFFFFF"/>
+                  <text x="48" y="58" font-size="14" font-weight="700" fill="#00D26A" letter-spacing="2">MATCHING ENGINE</text>
+                  <text x="48" y="94" font-size="30" font-weight="800" fill="#18181B">경험 데이터와 기업 분석 매핑</text>
+
+                  <rect x="56" y="148" width="260" height="200" rx="22" fill="#F4F4F5" stroke="#E4E4E7"/>
+                  <text x="111" y="214" font-size="14" font-weight="700" fill="#71717A">MY EXPERIENCE</text>
+                  <text x="111" y="254" font-size="22" font-weight="800" fill="#18181B">내 경험 데이터</text>
+                  <text x="111" y="292" font-size="16" fill="#52525B">프로젝트 / 활동 / 성과</text>
+
+                  <rect x="404" y="148" width="260" height="200" rx="22" fill="#F4F4F5" stroke="#E4E4E7"/>
+                  <text x="441" y="214" font-size="14" font-weight="700" fill="#71717A">COMPANY SIGNAL</text>
+                  <text x="441" y="254" font-size="22" font-weight="800" fill="#18181B">기업 분석 데이터</text>
+                  <text x="441" y="292" font-size="16" fill="#52525B">인재상 / 공고 / 핵심 키워드</text>
+
+                  <line x1="316" y1="248" x2="376" y2="248" stroke="#D4D4D8" stroke-width="5" stroke-linecap="round"/>
+                  <polygon points="392,248 370,234 370,262" fill="#D4D4D8"/>
+
+                  <rect x="176" y="392" width="368" height="174" rx="22" fill="#0F172A"/>
+                  <text x="276" y="442" font-size="14" font-weight="700" fill="#00D26A">AI MATCHING</text>
+                  <text x="276" y="478" font-size="22" font-weight="800" fill="#FFFFFF">Claude API 매핑</text>
+                  <text x="276" y="506" font-size="13" fill="#A1A1AA">경험 근거와 기업 키워드를</text>
+                  <text x="276" y="526" font-size="13" fill="#A1A1AA">문항별 초안으로 연결</text>
+
+                  <line x1="360" y1="566" x2="360" y2="594" stroke="#D4D4D8" stroke-width="5" stroke-linecap="round"/>
+                  <polygon points="360,612 346,590 374,590" fill="#D4D4D8"/>
+
+                  <rect x="96" y="640" width="528" height="144" rx="22" fill="#ECFDF3" stroke="#86EFAC"/>
+                  <text x="239" y="667" font-size="14" font-weight="700" fill="#15803D">GENERATED OUTPUT</text>
+                  <text x="239" y="711" font-size="24" font-weight="800" fill="#166534">문항별 자기소개서 초안</text>
+                  <text x="239" y="743" font-size="15" fill="#166534">지원동기 · 성장과정</text>
+                  <text x="239" y="767" font-size="15" fill="#166534">직무 역량 · 입사 후 계획</text>
+                </svg>
+                <div class="project-gallery-meta">
+                  <strong>핵심 기능 흐름</strong>
+                  <span>경험 데이터와 기업 분석의 매핑 구조</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7-3: 정호 -->
+    <section class="slide slide-light project-detail" data-slide-no="14">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">정호 · Group 02</span>
+          <h1 class="project-title">유튜브 클립 자동화<br>+ BodyLog</h1>
+          <p class="project-subtitle">영상 구간 자동 클립 도구 + 증상→행동→결과 추적 앱</p>
+          <ul class="project-bullets">
+            <li>키워드 입력 → HTML 위치 기반 영상 영역 탐지 → 클립 저장 (Chrome)</li>
+            <li>캡차 차단으로 완전 자동화 포기 → 사람이 재생 누르고 AI가 녹화하는 반자동</li>
+            <li>BodyLog: "허리 통증 → 스트레칭 1시간마다 → 며칠 후 효과" 타임라인 추적</li>
+            <li>QA 에이전트 도입 — 마우스 제어 충돌 해결하며 테스트 자동화 학습</li>
+          </ul>
+        </div>
+        <div class="project-right">
+          <div class="bodylog-preview">
+            <div class="project-source-note">week5/materials BodyLog 실제 화면 발췌</div>
+            <div class="bodylog-preview-grid">
+              <div class="bodylog-phone-wrap">
+                <div class="bodylog-phone project-previewable" data-preview-label="BodyLog 홈 화면">
+                  <div class="bodylog-nav">BodyLog <span class="right">👤</span></div>
+                  <div class="bodylog-seg">
+                    <div class="bodylog-seg-btn on">전면 보기</div>
+                    <div class="bodylog-seg-btn">후면 보기</div>
+                  </div>
+                  <div style="position:relative; height:246px; width:160px; margin:0 auto; flex-shrink:0;">
+                    <div style="position:absolute;left:45px;top:2px;width:70px;height:34px;background:#FAE8D5;border-radius:20px;"></div>
+                    <div style="position:absolute;left:24px;top:36px;width:112px;height:130px;background:#FAE8D5;border-radius:8px;"></div>
+                    <div style="position:absolute;left:27px;top:166px;width:44px;height:70px;background:#FAE8D5;border-radius:6px;"></div>
+                    <div style="position:absolute;left:89px;top:166px;width:44px;height:70px;background:#FAE8D5;border-radius:6px;"></div>
+                    <div style="position:absolute;left:48px;top:6px;width:64px;height:22px;background:var(--bodylog-head);border-radius:12px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">머리</div>
+                    <div style="position:absolute;left:30px;top:40px;width:100px;height:18px;background:var(--bodylog-shoulder);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">어깨·목</div>
+                    <div style="position:absolute;left:26px;top:62px;width:46px;height:44px;background:var(--bodylog-heart);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5px;color:#fff;font-weight:700;text-align:center;line-height:1.3;">심장·폐</div>
+                    <div style="position:absolute;left:88px;top:62px;width:46px;height:44px;background:var(--bodylog-liver);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5px;color:#fff;font-weight:700;text-align:center;line-height:1.3;">간·담낭</div>
+                    <div style="position:absolute;left:46px;top:108px;width:68px;height:24px;background:var(--bodylog-stomach);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">위</div>
+                    <div style="position:absolute;left:30px;top:134px;width:100px;height:26px;background:var(--bodylog-intestine);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">장</div>
+                    <div style="position:absolute;left:29px;top:192px;width:38px;height:28px;background:var(--bodylog-knee);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">무릎</div>
+                    <div style="position:absolute;left:93px;top:192px;width:38px;height:28px;background:var(--bodylog-knee);border-radius:4px;opacity:.65;display:flex;align-items:center;justify-content:center;font-size:5.5px;color:#fff;font-weight:700;">무릎</div>
+                    <div style="position:absolute;left:84px;top:12px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+                    <div style="position:absolute;left:45px;top:78px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+                    <div style="position:absolute;left:82px;top:114px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:1.5px solid #fff;"></div>
+                  </div>
+                  <div style="margin:4px 9px 0;background:#F3F4F6;border-radius:8px;padding:5px 9px;font-size:6.5px;display:flex;justify-content:space-between;align-items:center;border:1px solid #E5E5E5;flex-shrink:0;">
+                    <span>🩹 피부 (전신)</span><span style="color:#9CA3AF;">›</span>
+                  </div>
+                  <div style="margin:4px 9px 0;font-size:5.5px;font-weight:700;color:#9CA3AF;letter-spacing:0.5px;flex-shrink:0;">진행 중인 사이클</div>
+                  <div style="margin:2px 9px 0;background:#EFF6FF;border-radius:8px;padding:5px 8px;font-size:6px;border:1px solid #DBEAFE;flex-shrink:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                      <span style="font-weight:700;color:#1D4ED8;">어깨·목 — 목 디스크 통증</span>
+                      <span style="color:#9CA3AF;">›</span>
+                    </div>
+                    <div style="display:flex;gap:5px;align-items:center;">
+                      <span style="color:#6B7280;">3일째</span>
+                      <span style="color:#DBEAFE;">|</span>
+                      <span style="color:#F59E0B;font-weight:700;">강도 7→6</span>
+                    </div>
+                  </div>
+                  <div style="position:absolute;bottom:34px;right:12px;width:28px;height:28px;background:var(--bodylog-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;line-height:1;">+</div>
+                  <div style="flex:1;"></div>
+                  <div class="bodylog-tabs">
+                    <span class="bodylog-tab-on">🏠 홈</span><span>📋 타임</span><span>📊 요약</span><span>⚙️ 설정</span>
+                  </div>
+                </div>
+                <div class="bodylog-phone-label">S1 · Body Map 홈</div>
+              </div>
+
+              <div class="bodylog-phone-wrap">
+                <div class="bodylog-phone project-previewable" data-preview-label="BodyLog 증상 상세 입력 화면">
+                  <div class="bodylog-nav">새 증상 기록 <span class="back">&lt;</span></div>
+                  <div class="bodylog-step-dots"><div class="bodylog-step-dot on"></div><div class="bodylog-step-dot cur"></div><div class="bodylog-step-dot"></div><div class="bodylog-step-dot"></div><div class="bodylog-step-dot"></div></div>
+                  <div style="margin:3px 8px 4px;background:#EFF6FF;border-radius:10px;padding:2px 8px;font-size:6.5px;color:var(--bodylog-primary);font-weight:700;display:inline-block;">어깨·목</div>
+                  <div style="margin:4px 8px 2px;font-size:7px;font-weight:700;">증상 이름</div>
+                  <div style="margin:0 8px 5px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:5px 7px;font-size:7px;">목 디스크 통증</div>
+                  <div style="margin:3px 8px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:7px;font-weight:700;">통증 강도</span>
+                    <span style="font-size:11px;font-weight:900;color:#EF4444;">7</span>
+                  </div>
+                  <div style="margin:2px 8px 5px;">
+                    <div class="bodylog-slider-track">
+                      <div class="bodylog-slider-fill" style="width:70%;background:#EF4444;"></div>
+                      <div class="bodylog-slider-thumb" style="left:calc(70% - 5px);background:#EF4444;"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:5.5px;color:#9CA3AF;">
+                      <span>1 가벼움</span><span>10 매우 심함</span>
+                    </div>
+                  </div>
+                  <div style="margin:2px 8px 2px;font-size:7px;font-weight:700;">통증 유형</div>
+                  <div style="margin:2px 8px 5px;display:flex;flex-wrap:wrap;gap:3px;">
+                    <span class="bodylog-chip bodylog-chip-on">쑤시는</span>
+                    <span class="bodylog-chip">찌르는</span>
+                    <span class="bodylog-chip bodylog-chip-on">타는듯한</span>
+                    <span class="bodylog-chip">저린</span>
+                    <span class="bodylog-chip bodylog-chip-on">뻐근한</span>
+                    <span class="bodylog-chip">욱신거리는</span>
+                  </div>
+                  <div style="margin:2px 8px 2px;font-size:7px;font-weight:700;">증상 시작일</div>
+                  <div style="margin:0 8px;background:#F3F4F6;border:1px solid #E5E5E5;border-radius:5px;padding:4px 7px;font-size:7px;">📅 2026-05-11</div>
+                  <div style="margin:6px 8px 0;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:6px 8px;font-size:6px;color:#92400E;line-height:1.5;">원본 주차 발표의 실제 입력 플로우를 그대로 축약 반영</div>
+                  <div style="flex:1;"></div>
+                  <div style="border-top:1px solid #E5E5E5;padding:6px 8px;background:#fff;">
+                    <div class="bodylog-mini-btn">다음 — 원인 기록</div>
+                  </div>
+                </div>
+                <div class="bodylog-phone-label">S10 · 증상 상세 입력</div>
+              </div>
+
+              <div class="bodylog-phone-wrap">
+                <div class="bodylog-phone project-previewable" data-preview-label="BodyLog 전체 타임라인 화면">
+                  <div class="bodylog-nav">타임라인 <span class="right">필터 ▽</span></div>
+                  <div style="padding:5px 8px;display:flex;gap:3px;overflow:hidden;">
+                    <span class="bodylog-chip bodylog-chip-on">전체</span>
+                    <span class="bodylog-chip">어깨·목</span>
+                    <span class="bodylog-chip">머리</span>
+                    <span class="bodylog-chip">위</span>
+                  </div>
+                  <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">2026년 5월</div>
+                  <div style="border-top:1px solid #E5E5E5;margin:0 8px 4px;"></div>
+                  <div style="margin:0 8px 4px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+                    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                      <div style="width:7px;height:7px;background:var(--bodylog-shoulder);border-radius:50%;flex-shrink:0;"></div>
+                      <div style="font-size:7px;font-weight:700;">목 디스크 통증</div>
+                    </div>
+                    <div style="font-size:5.5px;color:#6B7280;">어깨·목 · 2026-05-02</div>
+                    <div style="font-size:5.5px;color:#6B7280;">도수치료 진행 중 (3주차)</div>
+                  </div>
+                  <div style="padding:3px 8px;font-size:6px;color:#9CA3AF;font-weight:700;">2026년 4월</div>
+                  <div style="border-top:1px solid #E5E5E5;margin:0 8px 4px;"></div>
+                  <div style="margin:0 8px 4px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+                    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                      <div style="width:7px;height:7px;background:var(--bodylog-head);border-radius:50%;flex-shrink:0;"></div>
+                      <div style="font-size:7px;font-weight:700;">편두통 재발</div>
+                    </div>
+                    <div style="font-size:5.5px;color:#6B7280;">머리 · 2026-04-25 · 편두통약 효과 있음</div>
+                  </div>
+                  <div style="margin:0 8px;border:1px solid #E5E5E5;border-radius:7px;padding:5px 7px;">
+                    <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                      <div style="width:7px;height:7px;background:var(--bodylog-stomach);border-radius:50%;flex-shrink:0;"></div>
+                      <div style="font-size:7px;font-weight:700;">속 쓰림</div>
+                    </div>
+                    <div style="font-size:5.5px;color:#6B7280;">위 · 2026-04-10 · 위장약 매우 효과 있음</div>
+                  </div>
+                  <div style="margin:8px 8px 0;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:6px 8px;font-size:6px;color:#166534;line-height:1.5;">증상→행동→결과가 타임라인으로 연결되어 재발 패턴을 다시 볼 수 있습니다.</div>
+                  <div style="flex:1;"></div>
+                  <div class="bodylog-tabs">
+                    <span>🏠 홈</span><span class="bodylog-tab-on">📋 타임</span><span>📊 요약</span><span>⚙️ 설정</span>
+                  </div>
+                </div>
+                <div class="bodylog-phone-label">S5 · 전체 타임라인</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 8 — 그룹 3 커버: AI 워크플로우
+         ========================================= -->
+    <section class="slide slide-dark section-cover" data-slide-no="15">
+      <div class="slide-inner">
+        <p class="section-group-tag">Group 03 — 3~5주차 토이프로젝트</p>
+        <h1 class="section-cover-title">AI를 더 잘 쓰기 위한<br>인프라를 쌓다</h1>
+        <p class="section-cover-members">현우 · 승현</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 8-1: 현우 -->
+    <section class="slide slide-light project-detail" data-slide-no="16">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">현우 · Group 03</span>
+          <h1 class="project-title">AI 대시보드 + 출처 태그<br>+ 슬라이드 마스터</h1>
+          <p class="project-subtitle">개인 AI 작업 흐름의 병목을 찾고, 신뢰도와 재사용성을 높이기 위해 직접 만든 운영 인프라</p>
+          <ul class="project-bullets">
+            <li>과정: 세션 로그와 토큰 사용량을 모아 어디서 시간이 새는지 먼저 보이게 만들었습니다</li>
+            <li>과정: 답변에 근거가 섞이는 문제를 줄이기 위해 출처 태그 체계를 별도로 설계했습니다</li>
+            <li>결과: slide-master로 대화형 슬라이드 deck 생성까지 자동화했고, 이 발표자료도 그 연장선에 있습니다</li>
+            <li>결과: Obsidian MCP를 붙여 개인 KB를 실제 작업 루프 안에서 다시 꺼내 쓰는 기반을 만들었습니다</li>
+          </ul>
+        </div>
+        <div class="project-right project-right-split">
+          <div class="project-screenshots">
+            <img src="assets/aideck_dashboard.png" class="project-screenshot-img" alt="AI Deck Dashboard">
+            <img src="assets/aideck_reports.png" class="project-screenshot-img" alt="AI Deck Reports">
+            <img src="assets/aideck_skills.png" class="project-screenshot-img" alt="AI Deck Skills">
+          </div>
+          <div class="project-right-svg">
+          <svg viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable','Apple SD Gothic Neo',sans-serif">
+            <rect width="720" height="900" rx="24" fill="#0A0A0A"/>
+            <text x="40" y="56" font-size="16" font-weight="700" fill="#00D26A" letter-spacing="2">PROCESS → RESULT DASHBOARD</text>
+
+            <rect x="32" y="88" width="208" height="118" rx="18" fill="#171717"/>
+            <text x="108" y="126" font-size="14" fill="#A1A1AA">총 세션</text>
+            <text x="108" y="176" font-size="34" font-weight="800" fill="#FFFFFF">247</text>
+
+            <rect x="256" y="88" width="208" height="118" rx="18" fill="#171717"/>
+            <text x="337" y="126" font-size="14" fill="#A1A1AA">사용 스킬</text>
+            <text x="337" y="176" font-size="34" font-weight="800" fill="#00D26A">18</text>
+
+            <rect x="480" y="88" width="208" height="118" rx="18" fill="#171717"/>
+            <text x="549" y="126" font-size="14" fill="#A1A1AA">절약 토큰</text>
+            <text x="549" y="176" font-size="34" font-weight="800" fill="#FFFFFF">2.4M</text>
+
+            <rect x="32" y="226" width="656" height="158" rx="22" fill="#171717"/>
+            <text x="143" y="272" font-size="14" font-weight="700" fill="#A1A1AA">PROCESS</text>
+            <text x="143" y="312" font-size="26" font-weight="800" fill="#FFFFFF">로그를 모아 병목을 먼저 보이게 만들기</text>
+            <text x="143" y="348" font-size="16" fill="#A1A1AA">세션, 토큰, 모델, 스킬 사용량을 한 화면에서 확인</text>
+
+            <rect x="32" y="418" width="312" height="168" rx="22" fill="#171717"/>
+            <text x="116" y="464" font-size="14" font-weight="700" fill="#00D26A">RESULT 01</text>
+            <text x="116" y="496" font-size="20" font-weight="800" fill="#FFFFFF">출처 태그 시스템</text>
+            <text x="116" y="528" font-size="13" fill="#A1A1AA">[추론] [실제 코드 기반]</text>
+            <text x="116" y="550" font-size="13" fill="#A1A1AA">[MCP 참조] [KB]</text>
+
+            <rect x="376" y="418" width="312" height="168" rx="22" fill="#0D2B1A" stroke="#00D26A"/>
+            <text x="468" y="464" font-size="14" font-weight="700" fill="#00D26A">RESULT 02</text>
+            <text x="468" y="496" font-size="20" font-weight="800" fill="#FFFFFF">slide-master</text>
+            <text x="468" y="528" font-size="13" fill="#A1A1AA">대화형 입력을</text>
+            <text x="468" y="550" font-size="13" fill="#A1A1AA">HTML 발표자료로 변환</text>
+
+            <rect x="32" y="610" width="312" height="138" rx="22" fill="#171717"/>
+            <text x="82" y="648" font-size="14" font-weight="700" fill="#A1A1AA">MCP</text>
+            <text x="82" y="688" font-size="24" font-weight="800" fill="#FFFFFF">Obsidian MCP</text>
+            <text x="82" y="720" font-size="15" fill="#A1A1AA">개인 KB를 작업 루프 안으로 연결</text>
+
+            <rect x="376" y="610" width="312" height="138" rx="22" fill="#171717"/>
+            <text x="406" y="648" font-size="14" font-weight="700" fill="#A1A1AA">KNOWLEDGE</text>
+            <text x="406" y="688" font-size="24" font-weight="800" fill="#FFFFFF">649개 vault 노트</text>
+            <text x="406" y="720" font-size="15" fill="#A1A1AA">개인용 Context7처럼 검색 가능한 기반</text>
+
+            <rect x="32" y="782" width="656" height="92" rx="18" fill="#171717"/>
+            <text x="194" y="821" font-size="17" font-weight="800" fill="#00D26A">결론: 과정을 계측해서</text>
+            <text x="194" y="847" font-size="17" font-weight="800" fill="#00D26A">다음 작업에도 재사용 가능한 도구로 만들었다</text>
+          </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8-2: 승현 -->
+    <section class="slide slide-light project-detail" data-slide-no="17">
+      <div class="slide-inner">
+        <div class="project-left">
+          <span class="project-person-chip">승현 · Group 03</span>
+          <h1 class="project-title">AI LLM 위키<br>+ 자동 브리핑 봇</h1>
+          <p class="project-subtitle">흩어진 지식을 AI가 자동 정리하는 개인 위키 시스템</p>
+          <ul class="project-bullets">
+            <li>뉴스·블로그 링크 → AI가 핵심 추출 → 위키 페이지로 자동 정리</li>
+            <li>Obsidian backlink 구조 참고 + Graphify로 관계 그래프 자동 생성</li>
+            <li>크론 기반 오늘의 브리핑/피드 생성, Telegram·CLI에서 호출</li>
+            <li>실제 배포 & 운영 중 (MCP write/read · SSE 연결)</li>
+          </ul>
+        </div>
+        <div class="project-right project-right-svg">
+          <svg viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg" font-family="'Pretendard Variable','Apple SD Gothic Neo',sans-serif">
+            <rect width="720" height="900" rx="24" fill="#0F172A"/>
+            <text x="40" y="56" font-size="16" font-weight="700" fill="#A1A1AA" letter-spacing="2">LLM WIKI · AUTOMATED BRIEFING</text>
+
+            <rect x="40" y="92" width="640" height="118" rx="22" fill="#1E293B" stroke="#334155"/>
+            <text x="241" y="125" font-size="14" font-weight="700" fill="#00D26A">INPUT</text>
+            <text x="241" y="159" font-size="20" font-weight="800" fill="#F8FAFC">뉴스나 블로그 링크 저장</text>
+            <text x="241" y="187" font-size="14" fill="#94A3B8">AI가 핵심만 뽑아 위키 초안을 만듭니다</text>
+
+            <line x1="360" y1="214" x2="360" y2="246" stroke="#334155" stroke-width="5" stroke-linecap="round"/>
+            <polygon points="360,264 346,242 374,242" fill="#334155"/>
+
+            <rect x="40" y="280" width="640" height="156" rx="22" fill="#1E293B" stroke="#334155"/>
+            <text x="209" y="328" font-size="14" font-weight="700" fill="#00D26A">WIKI PAGE</text>
+            <text x="209" y="366" font-size="24" font-weight="800" fill="#F8FAFC">링크 요약 + 관련 문서 연결</text>
+            <text x="209" y="398" font-size="15" fill="#94A3B8">핵심 내용, 출처, backlinks를 한 페이지에 정리</text>
+
+            <text x="40" y="474" font-size="14" font-weight="700" fill="#A1A1AA">사용자 접점</text>
+
+            <rect x="40" y="500" width="192" height="106" rx="20" fill="#1E293B" stroke="#334155"/>
+            <text x="74" y="545" font-size="22" font-weight="800" fill="#F8FAFC">CLI</text>
+            <text x="74" y="577" font-size="15" fill="#94A3B8">link save · search</text>
+
+            <rect x="264" y="500" width="192" height="106" rx="20" fill="#1E293B" stroke="#334155"/>
+            <text x="273" y="545" font-size="22" font-weight="800" fill="#F8FAFC">Telegram</text>
+            <text x="273" y="577" font-size="15" fill="#94A3B8">대화형 호출 · 모바일 사용</text>
+
+            <rect x="488" y="500" width="192" height="118" rx="20" fill="#1E293B" stroke="#334155"/>
+            <text x="535" y="542" font-size="22" font-weight="800" fill="#F8FAFC">Cron</text>
+            <text x="535" y="572" font-size="13" fill="#94A3B8">매일 아침 브리핑</text>
+            <text x="535" y="594" font-size="13" fill="#94A3B8">자동 피드</text>
+
+            <rect x="40" y="640" width="640" height="126" rx="22" fill="#132033" stroke="#334155"/>
+            <text x="238" y="668" font-size="14" font-weight="700" fill="#60A5FA">관계 그래프</text>
+            <text x="238" y="698" font-size="20" font-weight="800" fill="#F8FAFC">문서끼리 연결되며</text>
+            <text x="238" y="724" font-size="20" font-weight="800" fill="#F8FAFC">개인 지식망이 커집니다</text>
+            <text x="238" y="748" font-size="13" fill="#94A3B8">backlink 구조를 참고해 탐색성을 높인 구성</text>
+
+            <rect x="40" y="796" width="640" height="92" rx="18" fill="#1E293B" stroke="#334155"/>
+            <text x="251" y="835" font-size="15" font-weight="800" fill="#00D26A">결론: 저장, 정리, 호출, 브리핑이</text>
+            <text x="251" y="859" font-size="15" font-weight="800" fill="#00D26A">하나의 개인 위키 루프로 이어진다</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 9 — 회고 (slide-no 17)
+         ========================================= -->
+    <section class="slide slide-light retro-slide" data-slide-no="18" data-template="retro">
+      <div class="slide-inner">
+        <h1 class="slide-title">5주를 돌아보며</h1>
+        <div class="retro-summary">
+          <div class="retro-summary-card">
+            <div class="retro-summary-title">Process</div>
+            <div class="retro-summary-headline">학습, 공유, 실험을 반복하면서 각자 자기 방식의 AI workflow를 만들었습니다</div>
+            <div class="retro-summary-copy">앞 2주는 개념을 맞추고, 뒤 3주는 직접 만들고 부딪히며 다듬는 방식으로 흘러갔습니다.</div>
+          </div>
+          <div class="retro-summary-card accent">
+            <div class="retro-summary-title">Result</div>
+            <div class="retro-summary-headline">서비스 MVP부터 개인 툴, 지식 인프라까지 실제로 보여줄 수 있는 결과물이 남았습니다</div>
+            <div class="retro-summary-copy">무엇을 만들었는지만이 아니라, 다음에도 계속 써먹을 습관과 운영 방식까지 같이 남겼습니다.</div>
+          </div>
+        </div>
+        <div class="retro-grid">
+          <div class="retro-item accent">
+            <p class="retro-name">인호</p>
+            <p class="retro-text">전에는 AI를 가져다 쓰는 데만 급급했다면, 이번 스터디를 통해 정보를 직접 찾고 최신 기술 동향을 익히는 법을 배웠어요. 덕분에 좋은 일들도 많이 생겨 참 행복한 5주였습니다.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">도현</p>
+            <p class="retro-text">AI를 마냥 맹신해서는 안 되지만, 잘만 쓴다면 원하는 대로 동작시키는 데 큰 도움이 될 것 같습니다. 팀원분들께 AI 활용법을 많이 배웠어요.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">현우</p>
+            <p class="retro-text">다양한 직군과 방향성을 가진 분들과 의견을 나눌 수 있어서 좋았습니다. 각자 관심 영역이 달라서 그 영역별로 새로운 방법과 관점을 배워갈 수 있었어요. 스터디 하길 잘했다.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">영태</p>
+            <p class="retro-text">게임 개발에서 AI 에이전트를 올바르게 활용하는지 고민이 있었는데, 다양한 분들의 다양한 활용 방법을 얻고 갈 수 있어서 좋았습니다.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">수경</p>
+            <p class="retro-text">다양한 인사이트를 얻을 수 있었고, 다른 분들이 AI를 활용하는 방법을 구경할 수 있어서 너무 좋았습니다. 디벨롭할 수 있는 아이디어를 얻을 수 있어서 감사해요.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">정호</p>
+            <p class="retro-text">특정 부분을 깊게 학습했다기보다 여러 활용법이 있다는 걸 배우고 각각 조금씩 써보며 느낌을 파악할 수 있어 좋았습니다. 더 열심히 잘 써야겠다는 걸 느꼈어요.</p>
+          </div>
+          <div class="retro-item">
+            <p class="retro-name">성민</p>
+            <p class="retro-text">AI가 저보다 코드 작성 능력이 뛰어나니 조금 더 믿어보는 게 좋겠고, AI가 작성한 것을 어떻게 더 잘 검토할 수 있을지를 중점으로 발전시켜나가면 좋을 것 같습니다.</p>
+          </div>
+          <div class="retro-item accent">
+            <p class="retro-name">승현</p>
+            <p class="retro-text">저와 다른 환경에 있는 분들의 제각각의 경험과 해결 방법을 공유할 수 있어서 정말 도움이 많이 되었습니다. 앞으로도 같이 종종 모이면서 공유하는 시간이 있으면 좋겠어요.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================
+         SLIDE 9 — Closing Dark
+         ========================================= -->
+    <section class="slide slide-dark closing-dark" data-slide-no="19" data-template="closing-dark">
+      <div class="slide-inner">
+        <p class="closing-tag">AI 에이전트 기반 개발 워크플로우 설계와 실습 C팀</p>
+        <h1 class="closing-title">감사합니다</h1>
+        <p class="closing-message">과정을 쌓아 결과로 만들었고, 이제 그 결과를 다음 실험의 시작점으로 씁니다</p>
+        <div class="closing-divider"></div>
+      </div>
+    </section>
+
+  </div><!-- /.deck -->
+</div><!-- /.deck-wrapper -->
+
+<div id="slide-counter">1 / 19</div>
+
+<script>
+  (function () {
+    'use strict';
+
+    const TOTAL = 19;
+    let current = 1;
+    let overviewMode = false;
+
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slide-counter');
+    const previewables = document.querySelectorAll('.project-detail img, .project-detail svg, .project-previewable, .team-intro img');
+    let previewOverlay = null;
+    let previewStage = null;
+    let previewCaption = null;
+    let lastFocusedMedia = null;
+
+    // ---- Scale slide-inner to fit viewport ----
+    function scaleSlides() {
+      if (overviewMode) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const scaleW = vw / 1920;
+      const scaleH = vh / 1080;
+      const scale = Math.min(scaleW, scaleH);
+      const offsetX = (vw - 1920 * scale) / 2;
+      const offsetY = (vh - 1080 * scale) / 2;
+      slides.forEach(function (slide) {
+        const inner = slide.querySelector('.slide-inner');
+        if (inner) {
+          inner.style.transform = 'translate(' + offsetX + 'px, ' + offsetY + 'px) scale(' + scale + ')';
+        }
+      });
+    }
+
+    function showSlide(n) {
+      if (n < 1) n = 1;
+      if (n > TOTAL) n = TOTAL;
+      current = n;
+      slides.forEach(function (slide) {
+        const no = parseInt(slide.dataset.slideNo, 10);
+        if (no === current) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      counter.textContent = current + ' / ' + TOTAL;
+    }
+
+    function nextSlide() { showSlide(current + 1); }
+    function prevSlide() { showSlide(current - 1); }
+
+    function toggleOverview() {
+      overviewMode = !overviewMode;
+      document.body.classList.toggle('overview-mode', overviewMode);
+      if (overviewMode) {
+        slides.forEach(function (slide) { slide.classList.add('active'); });
+        counter.style.display = 'none';
+      } else {
+        showSlide(current);
+        scaleSlides();
+        counter.style.display = '';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen && document.exitFullscreen();
+      }
+    }
+
+    function createPreviewOverlay() {
+      previewOverlay = document.createElement('div');
+      previewOverlay.className = 'media-preview-overlay';
+      previewOverlay.innerHTML = [
+        '<div class="media-preview-dialog" role="dialog" aria-modal="true" aria-label="이미지 미리보기">',
+        '  <div class="media-preview-stage"></div>',
+        '  <div class="media-preview-caption">',
+        '    <strong class="media-preview-text">미리보기</strong>',
+        '    <span class="media-preview-close-hint">Esc 또는 배경 클릭으로 닫기</span>',
+        '  </div>',
+        '</div>'
+      ].join('');
+      document.body.appendChild(previewOverlay);
+      previewStage = previewOverlay.querySelector('.media-preview-stage');
+      previewCaption = previewOverlay.querySelector('.media-preview-text');
+
+      previewOverlay.addEventListener('click', function (e) {
+        if (e.target === previewOverlay) closePreview();
+      });
+
+      const dialog = previewOverlay.querySelector('.media-preview-dialog');
+      dialog.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
+
+    function getPreviewLabel(node) {
+      const explicit = node.getAttribute('data-preview-label')
+        || node.getAttribute('alt')
+        || node.getAttribute('aria-label');
+      if (explicit) return explicit;
+      const detail = node.closest('.project-detail');
+      if (detail) {
+        const title = detail.querySelector('.project-title');
+        if (title) return title.textContent.trim();
+      }
+      return '미리보기';
+    }
+
+    function clonePreviewNode(node) {
+      const clone = node.cloneNode(true);
+      const tag = clone.tagName.toLowerCase();
+      if (tag === 'img') {
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+      } else if (tag === 'svg') {
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.setAttribute('preserveAspectRatio', clone.getAttribute('preserveAspectRatio') || 'xMidYMid meet');
+      } else {
+        clone.classList.add('preview-clone');
+        clone.removeAttribute('tabindex');
+        clone.removeAttribute('role');
+        clone.removeAttribute('aria-label');
+      }
+      return clone;
+    }
+
+    function openPreview(node) {
+      if (!previewOverlay) createPreviewOverlay();
+      lastFocusedMedia = node;
+      previewStage.innerHTML = '';
+      previewStage.appendChild(clonePreviewNode(node));
+      previewCaption.textContent = getPreviewLabel(node);
+      previewOverlay.classList.add('is-open');
+      document.body.classList.add('preview-open');
+    }
+
+    function closePreview() {
+      if (!previewOverlay || !previewOverlay.classList.contains('is-open')) return;
+      previewOverlay.classList.remove('is-open');
+      document.body.classList.remove('preview-open');
+      previewStage.innerHTML = '';
+      if (lastFocusedMedia && typeof lastFocusedMedia.focus === 'function') {
+        lastFocusedMedia.focus({ preventScroll: true });
+      }
+      lastFocusedMedia = null;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function (e) {
+      if (previewOverlay && previewOverlay.classList.contains('is-open')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closePreview();
+        }
+        return;
+      }
+      if (overviewMode) {
+        if (e.key === 'o' || e.key === 'O' || e.key === 'Escape') toggleOverview();
+        return;
+      }
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ':
+          e.preventDefault();
+          nextSlide();
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          prevSlide();
+          break;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
+          break;
+        case 'Escape':
+          if (document.fullscreenElement) document.exitFullscreen();
+          break;
+        case 'o':
+        case 'O':
+          toggleOverview();
+          break;
+        case 'p':
+        case 'P':
+          window.print();
+          break;
+      }
+    });
+
+    // Overview: click to jump
+    slides.forEach(function (slide) {
+      slide.addEventListener('click', function () {
+        if (overviewMode) {
+          const no = parseInt(slide.dataset.slideNo, 10);
+          toggleOverview();
+          showSlide(no);
+          scaleSlides();
+        }
+      });
+    });
+
+    previewables.forEach(function (node) {
+      if (node.closest('.project-previewable') && !node.classList.contains('project-previewable')) {
+        return;
+      }
+      node.setAttribute('tabindex', '0');
+      node.setAttribute('role', 'button');
+      node.setAttribute('aria-label', getPreviewLabel(node) + ' 크게 보기');
+
+      node.addEventListener('click', function (e) {
+        if (overviewMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openPreview(node);
+      });
+
+      node.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openPreview(node);
+        }
+      });
+    });
+
+    // Touch / swipe
+    let touchStartX = 0;
+    document.addEventListener('touchstart', function (e) {
+      if (previewOverlay && previewOverlay.classList.contains('is-open')) return;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (previewOverlay && previewOverlay.classList.contains('is-open')) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) nextSlide();
+        else prevSlide();
+      }
+    }, { passive: true });
+
+    // Init
+    window.addEventListener('resize', scaleSlides);
+    showSlide(1);
+    scaleSlides();
+  })();
+</script>
+
+</body>
+</html>

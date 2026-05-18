@@ -66,3 +66,13 @@
 - [모닥랩 공식 홈페이지](https://modac-smilegate.replit.app/modac-lab)
 - [1주차 공유 리스트 & 자료](./week1)
 - [2주차 공유 리스트 & 자료](./week2)
+
+---
+
+## 🎤 최종 공유 발표 자료
+
+5주간의 학습과 토이 프로젝트를 정리한 C팀 최종 공유 발표 슬라이드입니다.
+
+- **🌐 슬라이드 보기 (GitHub Pages)**: [https://modaclab-4th-ai-agentic-programming.github.io/C-AI-Agent-Study/최종%20공유/](https://modaclab-4th-ai-agentic-programming.github.io/C-AI-Agent-Study/최종%20공유/)
+- **📁 자료 폴더**: [`./최종 공유/`](./최종%20공유)
+- **▶️ 조작**: 화살표 키(←/→)로 슬라이드 이동 · `O` 키로 오버뷰 모드 · 이미지 클릭 시 확대 미리보기
